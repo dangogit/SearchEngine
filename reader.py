@@ -15,24 +15,21 @@ class ReadFile:
         """
         full_path = os.path.join(self.corpus_path, file_name)
         df = pd.read_parquet(full_path, engine="pyarrow")
-        new_path=r"C:\Users\dorle\Data\test"+str(counter)+".csv"
-        df.to_csv(new_path)
         #read parquet and convert to csv file
-        #df.write.csv('C:\Users\dorle')
-
         return df.values.tolist()
 
-    def Read_Files(self,rootdir):
+    def Read_Files(self):
         counter=1
+        tweets_list=[] #list of lists where every list represents a single tweet with its components
         # main directory where the data sits
-        for subdir, dirs, files in os.walk(rootdir):
+        for subdir, dirs, files in os.walk(self.corpus_path):
             for dir in dirs:
-                new_path = rootdir + "\\" + dir
+                new_path = self.corpus_path + "\\" + dir
                 for subdir, dirs, files in os.walk(new_path):
                     for filename in files:
                         if ".parquet" in filename:
                             new_path = new_path + "\\" + filename;
-                            self.read_file(new_path,counter)
+                            tweets_list.append(self.read_file(new_path,counter))
                             counter+=1
 
 

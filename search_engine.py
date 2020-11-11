@@ -1,3 +1,5 @@
+import os
+
 from reader import ReadFile
 from configuration import ConfigClass
 from parser_module import Parse
@@ -18,14 +20,21 @@ def run_engine():
     p = Parse()
     indexer = Indexer(config)
 
-    documents_list = r.read_file(file_name='sample3.parquet')
-    # Iterate over every document in the file
-    for idx, document in enumerate(documents_list):
-        # parse the document
-        parsed_document = p.parse_doc(document)
-        number_of_documents += 1
-        # index the document data
-        indexer.add_new_doc(parsed_document)
+    for subdir, dirs, files in os.walk(r.corpus_path):
+        for dir in dirs:
+            new_path = r.corpus_path + "\\" + dir
+            for subdir, dirs, files in os.walk(new_path):
+                for filename in files:
+                    if ".parquet" in filename:
+                        new_path = new_path + "\\" + filename;
+                        documents_list = r.read_file(new_path)  #holds list of the tweets as text
+                        # Iterate over every document in the file
+                        for idx, document in enumerate(documents_list):
+                        # parse the document
+                            parsed_document = p.parse_doc(document)
+                            number_of_documents += 1
+                            # index the document data
+                            indexer.add_new_doc(parsed_document)
     print('Finished parsing and indexing. Starting to export files')
 
     utils.save_obj(indexer.inverted_idx, "inverted_idx")
