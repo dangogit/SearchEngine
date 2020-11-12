@@ -14,7 +14,7 @@ def run_engine():
     :return:
     """
     number_of_documents = 0
-
+    tweet_list =[]
     config = ConfigClass()
     r = ReadFile(corpus_path=config.get__corpusPath())
     p = Parse()
@@ -28,13 +28,15 @@ def run_engine():
                     if ".parquet" in filename:
                         new_path = new_path + "\\" + filename;
                         documents_list = r.read_file(new_path)  #holds list of the tweets as text
-                        # Iterate over every document in the file
-                        for idx, document in enumerate(documents_list):
-                        # parse the document
-                            parsed_document = p.parse_doc(document)
-                            number_of_documents += 1
-                            # index the document data
-                            indexer.add_new_doc(parsed_document)
+                        tweet_list += documents_list
+    # Iterate over every document in the file
+    for idx, document in enumerate(tweet_list):
+        # parse the document
+        print("num of doucments:"+str(number_of_documents+1))
+        parsed_document = p.parse_doc(document)
+        number_of_documents += 1
+        # index the document data
+        indexer.add_new_doc(parsed_document)
     print('Finished parsing and indexing. Starting to export files')
 
     utils.save_obj(indexer.inverted_idx, "inverted_idx")

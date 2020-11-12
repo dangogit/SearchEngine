@@ -1,3 +1,5 @@
+import math
+
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from document import Document
@@ -50,12 +52,30 @@ class Parse:
         return document
 
 
+    #returns a list of all the terms in the URL divided by /, = and .
+
     def parse_URL(self,URL):
         parsed = urlparse(URL, allow_fragments=True)
         parsed_url=[]
         parsed_url.append(parsed.scheme)
         parsed_url.append(parsed.netloc)
         path=parsed.path
+        path=path.split("/")
+        query=parsed.query
+        new_data = [re.sub("-\n|--|\n-", '', i) for i in path]
+        idx = 0
+        flag = True
+        while (flag):
+            if new_data[idx] == "/" or new_data[idx] == "." or new_data[idx] == "=":
+                new_word = ""
+                idx += 1
+                while (idx < len(new_data) and new_data[idx] != "/" and new_data[idx] != "." and new_data[idx] != "="):
+                    new_word += new_data[idx]
+                    idx += 1
+                parsed_url.append(new_word)
+                if (idx >= len(new_data)):
+                    flag = False
+        return parsed_url
 
 
     def parse_hashtag(text):
@@ -66,3 +86,20 @@ class Parse:
         splitted = pattern.findall(text[1:])
         splitted.append('#' + "".join(splitted))
         return [x.lower() for x in splitted]
+
+    def parse_precentage(text):
+        return text.replace("percentage", "%").replace("percent", "%").replace(" ", "")
+
+    def parse_clean_number(text):
+
+        millnames = ['', 'K', 'M', 'B']
+        n = float(text)
+        # print(n)
+        millidx = max(0, min(len(millnames) - 1,
+                             int(math.floor(0 if n == 0 else math.log10(abs(n)) / 3))))
+
+        return '{:.3f}{}'.format(n / 10 ** (3 * millidx), millnames[millidx])
+
+    def parse_big_number(text):
+        return text.replace(' Thousand', 'K').replace(' Million', 'M').replace(' Billion', 'B')
+
