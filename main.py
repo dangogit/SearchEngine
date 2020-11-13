@@ -1,6 +1,8 @@
 import re
 
 import nltk
+import spacy
+
 
 import search_engine
 from reader import ReadFile
@@ -12,27 +14,43 @@ if __name__ == '__main__':
     #newReader= ReadFile(r"C:\Users\dorle\Data")
     #newReader.Read_Files()
 
-    URL="https://www.instagram.com/p/CD7fAPWs3WM/?igshid=o9kf0ugp1l8x"
-    parsed = urlparse(URL, allow_fragments=True)
-    parsed_url = []
-    netloc=parsed.netloc
-    netloc=netloc.split('.')
-    parsed_url.append(parsed.scheme)
-    for i in netloc:
-        if (i != ""):
-            parsed_url.append(i)
-    path = parsed.path
-    path = re.split(', |_|-|!|\+|=|/',path)
-    for i in path:
-        if(i != ""):
-            parsed_url.append(i)
-    query = parsed.query
-    query = re.split(', |_|-|!|\+|=|/', query)
-    for i in query:
-        parsed_url.append(i)
-    text="The big star of the evening was without a doubt CongressWoman Alexandria Ocasio-Cortez"
-    nltk.pos(text)
+    URL="https://www.programiz.com/python-programming/dictionary"
+
+    text="CongressWoman Alexandria Ocasio-Cortez has announced Google as a crime syndicate"
+
+    nlp=spacy.load("en_core_web_sm")
+
+    doc=nlp(text)
+
+    for entity in doc.ents:
+        print(entity.text)
+
+    def parse_URL(URL):
+        parsed = urlparse(URL, allow_fragments=True)
+        parsed_url = []
+        parsed_url.append(parsed.scheme)
+        netloc = parsed.netloc
+        if "www" in netloc:
+            netloc = netloc.replace("www.", "")
+            parsed_url.append("www")
+        parsed_url.append(netloc)
+        path = parsed.path
+        path = re.split(', |_|-|!|\+|=|/', path)
+        query = parsed.query
+        query = re.split(', |_|-|!|\+|=|/', query)
+        for word in path:
+            if (word != ""):
+                parsed_url.append(word)
+        for word in query:
+            if (word != ""):
+                parsed_url.append(word)
+        string = ' '.join(parsed_url)
+        return string
 
 
 
-    print(parsed_url)
+
+    string=parse_URL(URL)
+    print(string)
+
+
