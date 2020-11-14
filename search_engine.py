@@ -30,13 +30,21 @@ def run_engine():
                         documents_list = r.read_file(new_path)  #holds list of the tweets as text
                         tweet_list += documents_list
     # Iterate over every document in the file
-    for idx, document in enumerate(tweet_list):
+    for idx, document in enumerate(documents_list):
+        #documents_list[idx][2] = p.word_to_lower(documents_list[idx][2], idx)
+        documents_list[idx][5] = p.word_to_lower(documents_list[idx][5], idx)
+
+    #p.fix_word_with_future_change()
+
+    for idx, document in enumerate(documents_list):
         # parse the document
         print("num of doucments:"+str(number_of_documents+1))
-        parsed_document = p.parse_doc(document)
+        parsed_document = p.parse_doc(document, idx)
         number_of_documents += 1
         # index the document data
         indexer.add_new_doc(parsed_document)
+        if number_of_documents == 5:
+            break
     print('Finished parsing and indexing. Starting to export files')
 
     utils.save_obj(indexer.inverted_idx, "inverted_idx")
