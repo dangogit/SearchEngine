@@ -1,6 +1,6 @@
 class ConfigClass:
     def __init__(self):
-        self.corpusPath = r'C:\Users\dorle\Data'
+        self.corpusPath = r'C:\Users\dorle\Data2'
         self.savedFileMainFolder = ''
         self.saveFilesWithStem = self.savedFileMainFolder + "/WithStem"
         self.saveFilesWithoutStem = self.savedFileMainFolder + "/WithoutStem"
