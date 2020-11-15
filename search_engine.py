@@ -30,13 +30,13 @@ def run_engine():
                         documents_list = r.read_file(new_path)  #holds list of the tweets as text
                         tweet_list += documents_list
     # Iterate over every document in the file
-    for idx, document in enumerate(documents_list):
-        #documents_list[idx][2] = p.word_to_lower(documents_list[idx][2], idx)
-        documents_list[idx][5] = p.word_to_lower(documents_list[idx][5], idx)
+    for idx, document in enumerate(tweet_list):
+        #tweet_list[idx][2] = p.word_to_lower(tweet_list[idx][2], idx)
+        tweet_list[idx][5] = p.word_to_lower(tweet_list[idx][5], idx)
 
     #p.fix_word_with_future_change()
 
-    for idx, document in enumerate(documents_list):
+    for idx, document in enumerate(tweet_list):
         # parse the document
         print("num of doucments:"+str(number_of_documents+1))
         parsed_document = p.parse_doc(document, idx)

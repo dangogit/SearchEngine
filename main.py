@@ -5,14 +5,20 @@ import spacy
 
 
 import search_engine
+from parser_module import Parse
 from reader import ReadFile
 from urllib.parse import urlparse
 
 
 if __name__ == '__main__':
-    search_engine.main()
+    #search_engine.main()
     #newReader= ReadFile(r"C:\Users\dorle\Data")
     #newReader.Read_Files()
+
+    #testing:
+    p = Parse()
+    text = p.parse_all_text("5G")
+    print(text)
 
     URL="https://www.programiz.com/python-programming/dictionary"
 

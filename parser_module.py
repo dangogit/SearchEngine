@@ -40,7 +40,7 @@ class Parse:
         :return: Document object with corresponding fields.
         """
         if idx in self.tweets_with_terms_to_fix:
-            #doc_as_list[2] = self.fix_word_with_future_change(doc_as_list[2])
+            doc_as_list[2] = self.fix_word_with_future_change(doc_as_list[2])
             doc_as_list[5] = self.fix_word_with_future_change(doc_as_list[5])
 
         tweet_id = doc_as_list[0]
@@ -88,14 +88,10 @@ class Parse:
                     # copy_text.replace(word,"")
                     # copy_text.replace(temp_num,self.parse_big_number(temp_num+word))
                 else:
-                    try:
-                        num = float(copy_text[count - 1])
-                    except ValueError:
-                        continue
                     copy_text[count - 1] = self.parse_clean_number(temp_num)
                 num_flag = False
 
-            if num_flag == False and (
+            elif num_flag == False and (
                     word == "Thousand" or word == "Million" or word == "Billion" or word == "million" or word == "billion" or word == "thousand"):
                 # in case a million appeared without any number before it
                 copy_text[count] = self.parse_big_number(word)
@@ -106,13 +102,17 @@ class Parse:
             elif word.find('%') > -1 or word.find('percent') > -1 or word.find('percentage') > -1 or word.find(
                     'Percentage') > -1 or word.find('Percent') > -1:
                 copy_text[count] = self.parse_precentage(word)
-            elif word[0].isnumeric():  # if found number check next word
-                word.replace(",", "")
+            elif word[0].isnumeric(): # if found number check next word
+                word = word.replace(",", "")
+                try: #BigSmallLetters:
+                    num = float(word)
+                except ValueError:
+                    continue
                 num_flag = True
                 temp_num = word
-            # elif BigSmallLetters:
-            #   do_something()
             count += 1
+            if count == len(copy_text) and num_flag:
+                copy_text[count - 1] = self.parse_clean_number(temp_num)
         parsed_text_as_str = ' '.join(copy_text)
         return parsed_text_as_str
 
@@ -153,13 +153,10 @@ class Parse:
         return text.replace("percentage", "%").replace("percent", "%").replace(" ", "")
 
     def parse_clean_number(self, text):
-
         text = text.replace(",", "")
         text = text.replace(":", "")
         millfullnames = ["Thousand", "Million", "Billion", "million", "billion", "thousand"]
         if text in millfullnames:
-            return text
-        if "th" in text or "G" in text:  # not sure, may need to create file of endings and check from there
             return text
         if ("/" in text):  # in case of fraction x/y
             converted_num = float(text[0]) / float(text[2])
@@ -173,9 +170,11 @@ class Parse:
         millidx = max(0, min(len(millnames) - 1,
                              int(math.floor(0 if n == 0 else math.log10(abs(n)) / 3))))
 
-        mylist = '{:.3f}{}'.format(n / 10 ** (3 * millidx), millnames[millidx])
-        string = ' '.join(mylist)
-        return string
+        mylist = '{:2.3f}{}'.format(n / 10 ** (3 * millidx), millnames[millidx])
+
+        return mylist
+
+
 
     def parse_big_number(self, text):
         text = text.replace(",", "")
