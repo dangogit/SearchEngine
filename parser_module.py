@@ -193,8 +193,8 @@ class Parse:
                 self.suspucious_words_for_entites[entity] = 1
 
     def word_to_lower(self, text, idx):
-        if text is None:
-            return
+        if text is None or not text.isalpha():
+            return text
         words_list = text.split()
         for word in words_list:
             if word not in self.word_set:
@@ -213,6 +213,8 @@ class Parse:
         return text
 
     def add_word_to_future_change(self, idx, word):
+        if word is None or not word.isalpha():
+            return
         if idx not in self.tweets_with_terms_to_fix.keys():  # new tweet
             self.tweets_with_terms_to_fix[idx] = set()
             self.tweets_with_terms_to_fix[idx].add(word)
@@ -221,8 +223,8 @@ class Parse:
             self.tweets_with_terms_to_fix[idx].add(word)
 
     def fix_word_with_future_change(self, text):
-        if text is None:
-            return None
+        if text is None or not text.isalpha():
+            return text
         words_list = text.split()
         for word in words_list:
             if "http" not in word and "#" not in word and "@" not in word:
