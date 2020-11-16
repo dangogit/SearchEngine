@@ -11,11 +11,11 @@ from urllib.parse import urlparse
 
 
 if __name__ == '__main__':
-   # search_engine.main()
+    search_engine.main()
     #newReader= ReadFile(r"C:\Users\dorle\Data")
     #newReader.Read_Files()
-
     #testing:
+   # print(re.sub('[0-9\[\]/"{},.:-]+', '', "COVID-19:"))
     p = Parse()
     text = p.parse_all_text("CongressWoman Alexandria Ocasio-Cortez has announced Google as a crime syndicate Google")
     print(text)

@@ -198,7 +198,9 @@ class Parse:
                 final_word += temp[1:]
                 final_word = final_word.replace("_", " ")
                 final_word = final_word.replace("-", "")
-                final_word = re.sub(r"([A-Z])", r" \1", final_word)
+                all_capital = self.check_capital(text)
+                if not all_capital:
+                    final_word = re.sub(r"([A-Z])", r" \1", final_word)
                 # final_word=final_word.replace(' ','')
                 final_word_as_lst = str.split(final_word, " ") + list_to_add
                 if (len(parseList) == idx):
@@ -247,16 +249,18 @@ class Parse:
     def parse_Entities(self, text):
         doc = self.nlp(text)
         for entity in doc.ents:
-            if (entity in self.suspucious_words_for_entites):  # if term already exists
-                self.suspucious_words_for_entites[entity] += 1
-            else:
-                self.suspucious_words_for_entites[entity] = 1
+            if entity.label_ is not "DATE" and entity.label_ is not "CARDINAL" and entity.label_ is not "QUANTITY" and "@" not in str(entity):
+                if str(entity) in self.suspucious_words_for_entites.keys():
+                    self.suspucious_words_for_entites[str(entity)] += text.count(str(entity))
+                else:
+                    self.suspucious_words_for_entites[str(entity)] = text.count(str(entity))
 
     def word_to_lower(self, text, idx):
         if text is None:
             return text
         words_list = text.split()
         for word in words_list:
+            word = re.sub('[0-9\[\]/"{},.:-]+', '', word)
             if not word.isalpha() or word.lower() in self.stop_words or "#" in word:
                 continue
             if word.islower() and word not in self.word_set:
@@ -273,6 +277,14 @@ class Parse:
         text = ' '.join(words_list)
 
         return text
+
+    def check_capital(self, text):
+        if "#" in text:
+            text = text.replace("#", "")
+        for letter in text:
+            if (letter.isnumeric() == False and letter.isupper() == False):
+                return False
+        return True
 
     def add_word_to_future_change(self, idx, word):
         if word is None or not word.isalpha():

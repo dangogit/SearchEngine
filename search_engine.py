@@ -33,25 +33,35 @@ def run_engine():
     before = []
     after = []
 
+    print("starting pre-parsing")
+
     for idx, document in enumerate(tweet_list):
         before.append(tweet_list[idx][2])
         tweet_list[idx][2] = p.word_to_lower(tweet_list[idx][2], idx)
         tweet_list[idx][5] = p.word_to_lower(tweet_list[idx][5], idx)
 
-    #p.fix_word_with_future_change()
+    print("finished pre-parsing")
 
     for idx, document in enumerate(tweet_list):
         # parse the document
         print("num of doucments:"+str(number_of_documents+1))
         parsed_document = p.parse_doc(document, idx)
         after.append(parsed_document.full_text)
-        #pasrser_text[tweet_list[idx][5]] = parsed_document.retweet_text
         number_of_documents += 1
         # index the document data
-        #indexer.add_new_doc(parsed_document)
-        if number_of_documents == 10:
+        indexer.add_new_doc(parsed_document)
+        if number_of_documents == 100:
             break
     print('Finished parsing and indexing. Starting to export files')
+
+    for i in range(len(before)):
+        print("*******************************************************************************************")
+        print("Before: tweet number(" + str(i) + ")")
+        print(before[i])
+        print("                                  ")
+        print("After: tweet number(" + str(i) + ")")
+        print(after[i])
+        print("*******************************************************************************************")
 
     utils.save_obj(indexer.inverted_idx, "inverted_idx")
     utils.save_obj(indexer.postingDict, "posting")
