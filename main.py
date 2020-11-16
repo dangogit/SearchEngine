@@ -11,13 +11,13 @@ from urllib.parse import urlparse
 
 
 if __name__ == '__main__':
-    #search_engine.main()
+    search_engine.main()
     #newReader= ReadFile(r"C:\Users\dorle\Data")
     #newReader.Read_Files()
 
     #testing:
     p = Parse()
-    text = p.parse_all_text("5G")
+    text = p.parse_all_text("2021.1")
     print(text)
 
     URL="https://www.programiz.com/python-programming/dictionary"

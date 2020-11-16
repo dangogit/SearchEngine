@@ -21,6 +21,7 @@ class Parse:
         self.suspucious_words_for_entites = {}  # dictionary of suspicious words for entites, key is the term and value is the nubmer of apperances
         self.word_set = set()
         self.tweets_with_terms_to_fix = {}
+        self.nlp = spacy.load("en_core_web_sm")
 
     def parse_sentence(self, text):
         """
@@ -39,9 +40,9 @@ class Parse:
         :param doc_as_list: list re-preseting the tweet.
         :return: Document object with corresponding fields.
         """
-        if idx in self.tweets_with_terms_to_fix:
-            doc_as_list[2] = self.fix_word_with_future_change(doc_as_list[2])
-            doc_as_list[5] = self.fix_word_with_future_change(doc_as_list[5])
+        if idx in self.tweets_with_terms_to_fix.keys():
+            doc_as_list[2] = self.fix_word_with_future_change(idx, doc_as_list[2])
+            doc_as_list[5] = self.fix_word_with_future_change(idx, doc_as_list[5])
 
         tweet_id = doc_as_list[0]
         tweet_date = doc_as_list[1]
@@ -52,6 +53,8 @@ class Parse:
         url = self.parse_URL(url)
         indices = doc_as_list[4]
         retweet_text = doc_as_list[5]
+        retweet_text=self.parse_all_text(
+            retweet_text)
         retweet_url = doc_as_list[6]
         retweet_url = self.parse_URL(url)
         retweet_indices = doc_as_list[7]
@@ -74,6 +77,8 @@ class Parse:
     # returns a list of all the terms in the URL divided by /, = and .
 
     def parse_all_text(self, text):
+        if text is None:
+            return text
         text.replace("/n", "")
         copy_text = text.split()
         num_flag = False
@@ -84,7 +89,7 @@ class Parse:
             if (num_flag):  # if found number on previous iteration
                 if word == "Thousand" or word == "Million" or word == "Billion" or word == "million" or word == "billion" or word == "thousand":
                     copy_text.remove(word)
-                    copy_text[count - 1] = self.parse_big_number(temp_num + " " + word)
+                    copy_text[count - 1] = self.parse_big_number(temp_num + word)
                     # copy_text.replace(word,"")
                     # copy_text.replace(temp_num,self.parse_big_number(temp_num+word))
                 else:
@@ -139,15 +144,42 @@ class Parse:
         return string
 
     def parse_hashtag(self, text):
-        if '_' in text:
-            pattern = re.compile(r"[a-z]+|\d+|[][a-z]+(?![a-z])-[_]")
-        else:
-            pattern = re.compile(r"[A-Z][a-z]+|\d+|[a-z]+(?![a-z])")
-        splitted = pattern.findall(text[1:])
-        splitted.append('#' + "".join(splitted))
-        mylist = [x.lower() for x in splitted]
-        string = ' '.join(mylist)
-        return string
+        idx = 0
+        final_word = ''
+        list_to_add = []
+        temp_txt = text
+        # if "_" in temp_txt:
+        temp_txt = temp_txt.replace("_", "").replace("-", "")
+        temp_txt = temp_txt.lower()
+        list_to_add.append(temp_txt)
+        list_with_numbers = re.split('(\d+)', text)
+        if "" in list_with_numbers:
+            list_with_numbers.remove("")
+        parseList = []
+        for item in list_with_numbers:
+            if item.isnumeric() == False:
+                parseList.append(item)
+            else:
+                list_to_add.append(item)
+        for word in parseList:
+            idx += 1
+            temp = word
+            if temp != "#":
+                final_word += temp[1:]
+                final_word = final_word.replace("_", " ")
+                final_word = final_word.replace("-", "")
+                final_word = re.sub(r"([A-Z])", r" \1", final_word)
+                # final_word=final_word.replace(' ','')
+                final_word_as_lst = str.split(final_word, " ") + list_to_add
+                if (len(parseList) == idx):
+                    parseList = parseList[:len(parseList) - 1] + final_word_as_lst
+                else:
+                    parseList = parseList[:idx] + final_word_as_lst + parseList[idx:]
+        if "" in parseList:
+            parseList.remove("")
+        string = ' '.join(parseList)
+        string_lower = string.lower()  # turn to lower case
+        return string_lower
 
     def parse_precentage(self, text):
         return text.replace("percentage", "%").replace("percent", "%").replace(" ", "")
@@ -170,6 +202,7 @@ class Parse:
         millidx = max(0, min(len(millnames) - 1,
                              int(math.floor(0 if n == 0 else math.log10(abs(n)) / 3))))
 
+
         mylist = '{:2.3f}{}'.format(n / 10 ** (3 * millidx), millnames[millidx])
 
         return mylist
@@ -179,13 +212,12 @@ class Parse:
     def parse_big_number(self, text):
         text = text.replace(",", "")
 
-        return text.replace(' Thousand', 'K').replace(' Million', 'M').replace(' Billion', 'B').replace(' thousand',
-                                                                                                        'K').replace(
-            ' billion', 'B').replace(' million', 'M')
+        return text.replace('Thousand', 'K').replace('Million', 'M').replace('Billion', 'B').replace('thousand',
+                                                                                                     'K').replace(
+            'billion', 'B').replace('million', 'M')
 
     def parse_Entities(self, text):
-        nlp = spacy.load("en_core_web_sm")
-        doc = nlp(text)
+        doc = self.nlp(text)
         for entity in doc.ents:
             if (entity in self.suspucious_words_for_entites):  # if term already exists
                 self.suspucious_words_for_entites[entity] += 1
@@ -193,21 +225,23 @@ class Parse:
                 self.suspucious_words_for_entites[entity] = 1
 
     def word_to_lower(self, text, idx):
-        if text is None or not text.isalpha():
+        if text is None:
             return text
         words_list = text.split()
         for word in words_list:
-            if word not in self.word_set:
-                if word.lower() not in self.word_set and "http" not in word and "#" not in word and "@" not in word:  # word was not in the set at all
+            if not word.isalpha() or word.lower() in self.stop_words or "#" in word:
+                continue
+            if word.islower() and word not in self.word_set:
+                self.word_set.add(word)
+
+            if word[0].isupper():
+                if word.lower() not in self.word_set:
                     self.word_set.add(word)
-                    if word[0].upper() + word[1:] in self.word_set:  # found lower case word first time
-                        self.word_set.remove(word[0].upper() + word[1:])
-                    if word.lower() != word:  # word is capital, maybe will need change in future
-                        self.add_word_to_future_change(idx, word)
-                else:  # word was with capital but in set with lower
-                    word = word.lower()
-            elif word.lower() != word:  # word is capital, maybe will need change in future
-                self.add_word_to_future_change(idx, word)
+                    self.add_word_to_future_change(idx, word)
+                else:
+                    text = text.replace(word, word.lower())
+
+
         text = ' '.join(words_list)
 
         return text
@@ -222,14 +256,13 @@ class Parse:
         elif word not in self.tweets_with_terms_to_fix[idx]:  # old tweet, new word
             self.tweets_with_terms_to_fix[idx].add(word)
 
-    def fix_word_with_future_change(self, text):
-        if text is None or not text.isalpha():
+    def fix_word_with_future_change(self, idx, text):
+        if text is None:
             return text
-        words_list = text.split()
-        for word in words_list:
-            if "http" not in word and "#" not in word and "@" not in word:
-                if word.lower() in self.word_set:
-                    text = text.replace(word, word.lower())
-                else:
-                    text = text.replace(word, word.upper())
+        for word in self.tweets_with_terms_to_fix[idx]:
+            if word.lower() in self.word_set:
+                text = text.replace(word, word.lower())
+            else:
+                text = text.replace(word, word.upper())
         return text
+
