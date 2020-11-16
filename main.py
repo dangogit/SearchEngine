@@ -2,6 +2,7 @@ import re
 
 import nltk
 import spacy
+from math import log
 
 
 import search_engine
@@ -9,12 +10,46 @@ from reader import ReadFile
 from urllib.parse import urlparse
 
 
+
+
+def parse_hashtag(text):
+    if '_' in text:
+        pattern = re.compile(r"[a-z]+|\d+|[][a-z]+(?![a-z])-[_]")
+    else:
+        pattern = re.compile(r"[A-Z][a-z]+|\d+|[a-z]+(?![a-z])")
+    splitted = pattern.findall(text[1:])
+    splitted.append('#' + "".join(splitted))
+    mylist = [x.lower() for x in splitted]
+    string = ' '.join(mylist)
+    return string
+
+
+def check_num_in_string(text):
+    flag=False
+    for letter in text:
+        if letter.isdigit():
+            flag=True
+    return True
+
+
+
+
+
+
+
+
+
+
+
 if __name__ == '__main__':
-    search_engine.main()
+    #search_engine.main()
     #newReader= ReadFile(r"C:\Users\dorle\Data")
     #newReader.Read_Files()
 
     URL="https://www.programiz.com/python-programming/dictionary"
+
+    test=parse_hastag_new("#StayAtHome2020")
+    print(test)
 
     text="CongressWoman Alexandria Ocasio-Cortez has announced Google as a crime syndicate"
 
@@ -48,9 +83,14 @@ if __name__ == '__main__':
         return string
 
 
-
+    parse_hastag_new("StayAtHome")
 
     string=parse_URL(URL)
     print(string)
+
+
+
+
+
 
 

@@ -24,7 +24,6 @@ class Parse:
         :param text:
         :return:
         """
-
         text_tokens = word_tokenize(text)
         text_tokens_without_stopwords = [w.lower() for w in text_tokens if w not in self.stop_words]
         return text_tokens_without_stopwords
@@ -38,17 +37,17 @@ class Parse:
         tweet_id = doc_as_list[0]
         tweet_date = doc_as_list[1]
         full_text = doc_as_list[2]
-        full_text = self.parse_all_text(
-            full_text)  # parse text with our functions, need to parse this one or retweet text?
+        # parse text with our functions, need to parse this one or retweet text?
         url = doc_as_list[3]
         url = self.parse_URL(url)
-        retweet_text = doc_as_list[4]
-        retweet_url = doc_as_list[5]
-        retweet_url = self.parse_URL(url)
-        quote_text = doc_as_list[6]
-        quote_url = doc_as_list[7]
+        retweet_text = doc_as_list[5]
+        retweet_url = doc_as_list[6]
+        quote_text = doc_as_list[7]
+        quote_url = doc_as_list[8]
         term_dict = {}
+        full_text=self.parse_all_text(full_text)
         tokenized_text = self.parse_sentence(full_text)
+        retweet_url = self.parse_URL(url)
         doc_length = len(tokenized_text)  # after text operations.
 
         for term in tokenized_text:
@@ -59,17 +58,20 @@ class Parse:
 
         document = Document(tweet_id, tweet_date, full_text, url, retweet_text, retweet_url, quote_text,
                             quote_url, term_dict, doc_length)
+        #return self.suspucious_words_for_entites to indxer
         return document
 
     # returns a list of all the terms in the URL divided by /, = and .
 
     def parse_all_text(self, text):
+        text.replace("/n","")
         copy_text = text.split()
         num_flag = False
         temp_num = ""
         self.parse_Entities(text)  # need to pass self?
         count = 0
         for word in copy_text:
+
             if (num_flag):  # if found number on previous iteration
                 if word == "Thousand" or word == "Million" or word == "Billion" or word == "million" or word == "billion" or word == "thousand":
                     copy_text.remove(word)
@@ -77,10 +79,12 @@ class Parse:
                     # copy_text.replace(word,"")
                     # copy_text.replace(temp_num,self.parse_big_number(temp_num+word))
                 else:
-                    check = self.parse_clean_number(temp_num)
                     copy_text[count - 1] = self.parse_clean_number(temp_num)
-                    continue
                 num_flag = False
+
+            if num_flag==False and (word == "Thousand" or word == "Million" or word == "Billion" or word == "million" or word == "billion" or word == "thousand"):
+                #in case a million appeared without any number before it
+                copy_text[count]=self.parse_clean_number(word)
             # if hastag
             if word[0] == "#":
                 copy_text[count] = self.parse_hashtag(word)
@@ -122,7 +126,7 @@ class Parse:
 
     def parse_hashtag(self, text):
         if '_' in text:
-            pattern = re.compile(r"[a-z]+|\d+|[][a-z]+(?![a-z])-[]")
+            pattern = re.compile(r"[a-z]+|\d+|[][a-z]+(?![a-z])-[_]")
         else:
             pattern = re.compile(r"[A-Z][a-z]+|\d+|[a-z]+(?![a-z])")
         splitted = pattern.findall(text[1:])
@@ -136,6 +140,19 @@ class Parse:
 
     def parse_clean_number(self, text):
 
+        text=text.replace(",","")
+        text=text.replace(":","")
+
+        if (text == "Thousand" or text == "Million"  or text == "Billion" or text == "million" or text == "billion" or text == "thousand"):
+            return text
+        if "th" in text or "G" in text: #not sure, may need to create file of endings and check from there
+            return text
+        if( "/" in text): #in case of fraction x/y
+            converted_num= float(text[0])/float(text[2])
+            return str(converted_num)
+        if float(text) < 1000:
+            return text
+
         millnames = ['', 'K', 'M', 'B']
         n = float(text)
         # print(n)
@@ -147,6 +164,8 @@ class Parse:
         return string
 
     def parse_big_number(self, text):
+        text=text.replace(",","")
+
         return text.replace(' Thousand', 'K').replace(' Million', 'M').replace(' Billion', 'B').replace(' thousand',
                                                                                                         'K').replace(
             ' billion', 'B').replace(' million', 'M')
