@@ -11,12 +11,16 @@ import re
 
 
 class Parse:
+    # todo:
+    # 1. funtion to fix all the capital and non capital words in the cursor
+    # 2. add the 2 new parsing methods
+    # 3. tests
 
     def __init__(self):
         self.stop_words = stopwords.words('english')
-        self.suspucious_words_for_entites = dict()  # dictionary of suspicious words for entites, key is the term and value is the nubmer of apperances
+        self.suspucious_words_for_entites = {}  # dictionary of suspicious words for entites, key is the term and value is the nubmer of apperances
         self.word_set = set()
-        self.tweets_with_terms_to_fix = dict()
+        self.tweets_with_terms_to_fix = {}
 
     def parse_sentence(self, text):
         """
@@ -24,30 +28,37 @@ class Parse:
         :param text:
         :return:
         """
+
         text_tokens = word_tokenize(text)
         text_tokens_without_stopwords = [w.lower() for w in text_tokens if w not in self.stop_words]
         return text_tokens_without_stopwords
 
-    def parse_doc(self, doc_as_list):
+    def parse_doc(self, doc_as_list, idx):
         """
         This function takes a tweet document as list and break it into different fields
         :param doc_as_list: list re-preseting the tweet.
         :return: Document object with corresponding fields.
         """
+        if idx in self.tweets_with_terms_to_fix:
+            doc_as_list[2] = self.fix_word_with_future_change(doc_as_list[2])
+            doc_as_list[5] = self.fix_word_with_future_change(doc_as_list[5])
+
         tweet_id = doc_as_list[0]
         tweet_date = doc_as_list[1]
         full_text = doc_as_list[2]
-        # parse text with our functions, need to parse this one or retweet text?
+        full_text = self.parse_all_text(
+            full_text)  # parse text with our functions, need to parse this one or retweet text?
         url = doc_as_list[3]
         url = self.parse_URL(url)
+        indices = doc_as_list[4]
         retweet_text = doc_as_list[5]
         retweet_url = doc_as_list[6]
-        quote_text = doc_as_list[7]
-        quote_url = doc_as_list[8]
-        term_dict = {}
-        full_text=self.parse_all_text(full_text)
-        tokenized_text = self.parse_sentence(full_text)
         retweet_url = self.parse_URL(url)
+        retweet_indices = doc_as_list[7]
+        quote_text = doc_as_list[8]
+        quote_url = doc_as_list[9]
+        term_dict = {}
+        tokenized_text = self.parse_sentence(full_text)
         doc_length = len(tokenized_text)  # after text operations.
 
         for term in tokenized_text:
@@ -58,20 +69,18 @@ class Parse:
 
         document = Document(tweet_id, tweet_date, full_text, url, retweet_text, retweet_url, quote_text,
                             quote_url, term_dict, doc_length)
-        #return self.suspucious_words_for_entites to indxer
         return document
 
     # returns a list of all the terms in the URL divided by /, = and .
 
     def parse_all_text(self, text):
-        text.replace("/n","")
+        text.replace("/n", "")
         copy_text = text.split()
         num_flag = False
         temp_num = ""
         self.parse_Entities(text)  # need to pass self?
         count = 0
         for word in copy_text:
-
             if (num_flag):  # if found number on previous iteration
                 if word == "Thousand" or word == "Million" or word == "Billion" or word == "million" or word == "billion" or word == "thousand":
                     copy_text.remove(word)
@@ -82,9 +91,10 @@ class Parse:
                     copy_text[count - 1] = self.parse_clean_number(temp_num)
                 num_flag = False
 
-            if num_flag==False and (word == "Thousand" or word == "Million" or word == "Billion" or word == "million" or word == "billion" or word == "thousand"):
-                #in case a million appeared without any number before it
-                copy_text[count]=self.parse_clean_number(word)
+            elif num_flag == False and (
+                    word == "Thousand" or word == "Million" or word == "Billion" or word == "million" or word == "billion" or word == "thousand"):
+                # in case a million appeared without any number before it
+                copy_text[count] = self.parse_big_number(word)
             # if hastag
             if word[0] == "#":
                 copy_text[count] = self.parse_hashtag(word)
@@ -92,13 +102,17 @@ class Parse:
             elif word.find('%') > -1 or word.find('percent') > -1 or word.find('percentage') > -1 or word.find(
                     'Percentage') > -1 or word.find('Percent') > -1:
                 copy_text[count] = self.parse_precentage(word)
-            elif word[0].isnumeric():  # if found number check next word
-                word.replace(",", "")
+            elif word[0].isnumeric(): # if found number check next word
+                word = word.replace(",", "")
+                try: #BigSmallLetters:
+                    num = float(word)
+                except ValueError:
+                    continue
                 num_flag = True
                 temp_num = word
-            # elif BigSmallLetters:
-            #   do_something()
             count += 1
+            if count == len(copy_text) and num_flag:
+                copy_text[count - 1] = self.parse_clean_number(temp_num)
         parsed_text_as_str = ' '.join(copy_text)
         return parsed_text_as_str
 
@@ -139,16 +153,13 @@ class Parse:
         return text.replace("percentage", "%").replace("percent", "%").replace(" ", "")
 
     def parse_clean_number(self, text):
-
-        text=text.replace(",","")
-        text=text.replace(":","")
-
-        if (text == "Thousand" or text == "Million"  or text == "Billion" or text == "million" or text == "billion" or text == "thousand"):
+        text = text.replace(",", "")
+        text = text.replace(":", "")
+        millfullnames = ["Thousand", "Million", "Billion", "million", "billion", "thousand"]
+        if text in millfullnames:
             return text
-        if "th" in text or "G" in text: #not sure, may need to create file of endings and check from there
-            return text
-        if( "/" in text): #in case of fraction x/y
-            converted_num= float(text[0])/float(text[2])
+        if ("/" in text):  # in case of fraction x/y
+            converted_num = float(text[0]) / float(text[2])
             return str(converted_num)
         if float(text) < 1000:
             return text
@@ -159,12 +170,14 @@ class Parse:
         millidx = max(0, min(len(millnames) - 1,
                              int(math.floor(0 if n == 0 else math.log10(abs(n)) / 3))))
 
-        mylist = '{:.3f}{}'.format(n / 10 ** (3 * millidx), millnames[millidx])
-        string = ' '.join(mylist)
-        return string
+        mylist = '{:2.3f}{}'.format(n / 10 ** (3 * millidx), millnames[millidx])
+
+        return mylist
+
+
 
     def parse_big_number(self, text):
-        text=text.replace(",","")
+        text = text.replace(",", "")
 
         return text.replace(' Thousand', 'K').replace(' Million', 'M').replace(' Billion', 'B').replace(' thousand',
                                                                                                         'K').replace(
@@ -179,30 +192,44 @@ class Parse:
             else:
                 self.suspucious_words_for_entites[entity] = 1
 
-    def word_to_lower(self, tweet):
-        text = tweet[4]
-        index = 0
-        for word in text:
+    def word_to_lower(self, text, idx):
+        if text is None or not text.isalpha():
+            return text
+        words_list = text.split()
+        for word in words_list:
             if word not in self.word_set:
-                if word.lower not in self.word_set:  # word was not in the set at all
+                if word.lower() not in self.word_set and "http" not in word and "#" not in word and "@" not in word:  # word was not in the set at all
                     self.word_set.add(word)
-                    if word[0].upper + word[1:] in self.word_set:  # found lower case word first time
-                        self.word_set.remove(word[0].upper + word[1:])
-                    if word.lower != word:  # word is capital, maybe will need change in future
-                        self.add_word_to_future_change(tweet, word, index)
+                    if word[0].upper() + word[1:] in self.word_set:  # found lower case word first time
+                        self.word_set.remove(word[0].upper() + word[1:])
+                    if word.lower() != word:  # word is capital, maybe will need change in future
+                        self.add_word_to_future_change(idx, word)
                 else:  # word was with capital but in set with lower
-                    word = word.lower
-            elif word.lower != word:  # word is capital, maybe will need change in future
-                self.add_word_to_future_change(tweet, word, index)
-            index += 1
+                    word = word.lower()
+            elif word.lower() != word:  # word is capital, maybe will need change in future
+                self.add_word_to_future_change(idx, word)
+        text = ' '.join(words_list)
 
-    def add_word_to_future_change(self, tweet, word, index):
-        if tweet not in self.tweets_with_terms_to_fix.keys():  # new tweet
-            self.tweets_with_terms_to_fix[tweet] = dict()
-            self.tweets_with_terms_to_fix[tweet][word] = [index]
+        return text
 
-        elif word not in self.tweets_with_terms_to_fix[tweet].keys():  # old tweet, new word
-            self.tweets_with_terms_to_fix[tweet][word] = [index]
+    def add_word_to_future_change(self, idx, word):
+        if word is None or not word.isalpha():
+            return
+        if idx not in self.tweets_with_terms_to_fix.keys():  # new tweet
+            self.tweets_with_terms_to_fix[idx] = set()
+            self.tweets_with_terms_to_fix[idx].add(word)
 
-        else:  # old tweet, old word, new index
-            self.tweets_with_terms_to_fix[tweet][word].append(index)
+        elif word not in self.tweets_with_terms_to_fix[idx]:  # old tweet, new word
+            self.tweets_with_terms_to_fix[idx].add(word)
+
+    def fix_word_with_future_change(self, text):
+        if text is None or not text.isalpha():
+            return text
+        words_list = text.split()
+        for word in words_list:
+            if "http" not in word and "#" not in word and "@" not in word:
+                if word.lower() in self.word_set:
+                    text = text.replace(word, word.lower())
+                else:
+                    text = text.replace(word, word.upper())
+        return text
