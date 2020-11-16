@@ -40,11 +40,13 @@ def run_engine():
         tweet_list[idx][2] = p.word_to_lower(tweet_list[idx][2], idx)
         tweet_list[idx][5] = p.word_to_lower(tweet_list[idx][5], idx)
 
+
     print("finished pre-parsing")
 
     for idx, document in enumerate(tweet_list):
         # parse the document
         print("num of doucments:"+str(number_of_documents+1))
+
         parsed_document = p.parse_doc(document, idx)
         after.append(parsed_document.full_text)
         number_of_documents += 1
@@ -54,7 +56,7 @@ def run_engine():
             break
     print('Finished parsing and indexing. Starting to export files')
 
-    for i in range(len(before)):
+    for i in range(len(before)-1):
         print("*******************************************************************************************")
         print("Before: tweet number(" + str(i) + ")")
         print(before[i])

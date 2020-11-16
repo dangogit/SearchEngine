@@ -84,6 +84,7 @@ class Parse:
         retweet_indices = doc_as_list[7]
         quote_text = doc_as_list[8]
         quote_url = doc_as_list[9]
+
         term_dict = {}
         tokenized_text = self.parse_sentence(full_text)
         doc_length = len(tokenized_text)  # after text operations.
@@ -110,6 +111,7 @@ class Parse:
         temp_num = ""
         self.parse_Entities(text)  # need to pass self?
         count = 0
+        copy_text = [w for w in copy_text if w.lower() not in self.stop_words]
         for word in copy_text:
             if (num_flag):  # if found number on previous iteration
                 if word == "Thousand" or word == "Million" or word == "Billion" or word == "million" or word == "billion" or word == "thousand":
