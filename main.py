@@ -70,7 +70,7 @@ if __name__ == '__main__':
    # text = p.parse_all_text("2021.1")
    # print(text)
 
-    test = parse_hashtag("#STAYatHOME")
+    test = parse_hashtag("#COVID19")
     print(test)
 
 
