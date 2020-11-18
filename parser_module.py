@@ -58,27 +58,24 @@ class Parse:
         text_tokens_without_stopwords = [w.lower() for w in text_tokens if w not in self.stop_words]
         return text_tokens_without_stopwords
 
-    def parse_doc(self, doc_as_list, idx):
+    def parse_doc(self, doc_as_list, idx=-1):
         """
         This function takes a tweet document as list and break it into different fields
         :param doc_as_list: list re-preseting the tweet.
         :return: Document object with corresponding fields.
         """
-        if idx in self.tweets_with_terms_to_fix.keys():
-            doc_as_list[2] = self.fix_word_with_future_change(idx, doc_as_list[2])
-            doc_as_list[5] = self.fix_word_with_future_change(idx, doc_as_list[5])
 
         tweet_id = doc_as_list[0]
         tweet_date = doc_as_list[1]
         full_text = doc_as_list[2]
         full_text = self.parse_all_text(
-            full_text)  # parse text with our functions, need to parse this one or retweet text?
+            full_text, idx)  # parse text with our functions, need to parse this one or retweet text?
         url = doc_as_list[3]
         url = self.parse_URL(url)
         indices = doc_as_list[4]
         retweet_text = doc_as_list[5]
         retweet_text=self.parse_all_text(
-            retweet_text)
+            retweet_text, idx)
         retweet_url = doc_as_list[6]
         retweet_url = self.parse_URL(url)
         retweet_indices = doc_as_list[7]
@@ -101,7 +98,7 @@ class Parse:
 
     # returns a list of all the terms in the URL divided by /, = and .
 
-    def parse_all_text(self, text):
+    def parse_all_text(self, text, idx):
         if text is None:
             return text
         text.replace("/n", "")
@@ -151,6 +148,7 @@ class Parse:
             if count == len(copy_text) and num_flag:
                 copy_text[count - 1] = self.parse_clean_number(temp_num)
         parsed_text_as_str = ' '.join(copy_text)
+        parsed_text_as_str = self.word_to_lower(parsed_text_as_str, idx)
         return parsed_text_as_str
 
     def parse_URL(self, URL):
@@ -268,12 +266,14 @@ class Parse:
             if word.islower() and word not in self.word_set:
                 self.word_set.add(word)
 
-            if word[0].isupper():
+            elif word[0].isupper():
                 if word.lower() not in self.word_set:
                     self.word_set.add(word)
                     self.add_word_to_future_change(idx, word)
                 else:
                     text = text.replace(word, word.lower())
+                    if word in self.word_set:
+                        self.word_set.remove(word)
 
 
         text = ' '.join(words_list)

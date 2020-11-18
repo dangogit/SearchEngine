@@ -15,6 +15,7 @@ def run_engine():
     """
     number_of_documents = 0
     tweet_list =[]
+    parsed_tweets = []
     config = ConfigClass()
     r = ReadFile(corpus_path=config.get__corpusPath())
     p = Parse()
@@ -33,28 +34,27 @@ def run_engine():
     before = []
     after = []
 
-    print("starting pre-parsing")
+     #   tweet_list[idx][2] = p.word_to_lower(tweet_list[idx][2], idx)
+    #    tweet_list[idx][5] = p.word_to_lower(tweet_list[idx][5], idx)
 
-    for idx, document in enumerate(tweet_list):
-        before.append(tweet_list[idx][2])
-        tweet_list[idx][2] = p.word_to_lower(tweet_list[idx][2], idx)
-        tweet_list[idx][5] = p.word_to_lower(tweet_list[idx][5], idx)
-
-
-    print("finished pre-parsing")
 
     for idx, document in enumerate(tweet_list):
         # parse the document
         print("num of doucments:"+str(number_of_documents+1))
-
+        before.append(document[2])
         parsed_document = p.parse_doc(document, idx)
-        after.append(parsed_document.full_text)
+        parsed_tweets.append(parsed_document)
         number_of_documents += 1
-        # index the document data
-        indexer.add_new_doc(parsed_document)
         if number_of_documents == 100:
             break
-    print('Finished parsing and indexing. Starting to export files')
+
+    for idx, parsed_document in enumerate(parsed_tweets):
+        if idx in p.tweets_with_terms_to_fix.keys():
+            parsed_document.full_text = p.fix_word_with_future_change(idx, parsed_document.full_text)
+            parsed_document.retweet_text = p.fix_word_with_future_change(idx, parsed_document.retweet_text)
+        # index the document data
+        after.append(parsed_document.full_text)
+        indexer.add_new_doc(parsed_document)
 
     for i in range(len(before)-1):
         print("*******************************************************************************************")
@@ -67,6 +67,16 @@ def run_engine():
 
     utils.save_obj(indexer.inverted_idx, "inverted_idx")
     utils.save_obj(indexer.postingDict, "posting")
+
+def main(corpus_path, output_path, stemming, queries, num_docs_to_retrieve):
+    '''
+    corpus_path - הנתיב של הקורפוס
+    output_path - הנתיב של הפלט שלכם
+    stemming - משתנה בוליאני.
+    queries- צריך לתמוך בשתי אפשרויות, קובץ של שאילתות בו כל שורה מהווה שאילתא (יסופק לכם קובץ לדוגמא) או רשימה (list) של שאילתות כך שכל איבר ברשימה יהווה שאילתא.
+    num_docs_to_retrieve - מספר מסמכים להחזרה עבור כל שאילתא.
+    '''
+    return
 
 
 def load_index():
