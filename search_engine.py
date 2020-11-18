@@ -50,8 +50,11 @@ def run_engine():
 
     for idx, parsed_document in enumerate(parsed_tweets):
         if idx in p.tweets_with_terms_to_fix.keys():
+            if idx == 7:
+                print("a")
             parsed_document.full_text = p.fix_word_with_future_change(idx, parsed_document.full_text)
             parsed_document.retweet_text = p.fix_word_with_future_change(idx, parsed_document.retweet_text)
+
         # index the document data
         after.append(parsed_document.full_text)
         indexer.add_new_doc(parsed_document)

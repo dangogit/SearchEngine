@@ -109,6 +109,7 @@ class Parse:
         self.parse_Entities(text)  # need to pass self?
         count = 0
         copy_text = [w for w in copy_text if w.lower() not in self.stop_words]
+        copy_text = self.word_to_lower(' '.join(copy_text), idx).split()
         for word in copy_text:
             if (num_flag):  # if found number on previous iteration
                 if word == "Thousand" or word == "Million" or word == "Billion" or word == "million" or word == "billion" or word == "thousand":
@@ -134,7 +135,7 @@ class Parse:
 
             elif word in self.countries_codes["Code"]:
                 index = self.countries_codes["Code"].index(word)
-                copy_text[count] = self.countries_codes["Name"][index]
+                copy_text[count] = self.countries_codes["Name"][index].upper()
 
             elif word[0].isnumeric(): # if found number check next word
                 word = word.replace(",", "")
@@ -148,7 +149,6 @@ class Parse:
             if count == len(copy_text) and num_flag:
                 copy_text[count - 1] = self.parse_clean_number(temp_num)
         parsed_text_as_str = ' '.join(copy_text)
-        parsed_text_as_str = self.word_to_lower(parsed_text_as_str, idx)
         return parsed_text_as_str
 
     def parse_URL(self, URL):
@@ -259,11 +259,16 @@ class Parse:
         if text is None:
             return text
         words_list = text.split()
+        count = 0
         for word in words_list:
             word = re.sub('[0-9\[\]/"{},.:-]+', '', word)
             if not word.isalpha() or word.lower() in self.stop_words or "#" in word:
+                count+=1
                 continue
-            if word.islower() and word not in self.word_set:
+
+            if word.islower():
+                if word in self.word_set:
+                    self.word_set.remove(word)
                 self.word_set.add(word)
 
             elif word[0].isupper():
@@ -271,9 +276,10 @@ class Parse:
                     self.word_set.add(word)
                     self.add_word_to_future_change(idx, word)
                 else:
-                    text = text.replace(word, word.lower())
                     if word in self.word_set:
                         self.word_set.remove(word)
+                    words_list[count] = word.lower()
+            count+=1
 
 
         text = ' '.join(words_list)
