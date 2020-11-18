@@ -2,7 +2,7 @@ import math
 import spacy
 from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
-
+import pandas as pd
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from document import Document
@@ -21,7 +21,31 @@ class Parse:
         self.suspucious_words_for_entites = {}  # dictionary of suspicious words for entites, key is the term and value is the nubmer of apperances
         self.word_set = set()
         self.tweets_with_terms_to_fix = {}
+        self.countries_codes = pd.read_csv("countries_codes").to_dict(orient='list')
         self.nlp = spacy.load("en_core_web_sm")
+
+    def deEmojify(self, text):
+        emoji_pattern = re.compile("["
+                                   u"\U0001F600-\U0001F64F"  # emoticons
+                                   u"\U0001F300-\U0001F5FF"  # symbols & pictographs
+                                   u"\U0001F680-\U0001F6FF"  # transport & map symbols
+                                   u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
+                                   u"\U00002500-\U00002BEF"  # chinese char
+                                   u"\U00002702-\U000027B0"
+                                   u"\U00002702-\U000027B0"
+                                   u"\U000024C2-\U0001F251"
+                                   u"\U0001f926-\U0001f937"
+                                   u"\U00010000-\U0010ffff"
+                                   u"\u2640-\u2642"
+                                   u"\u2600-\u2B55"
+                                   u"\u200d"
+                                   u"\u23cf"
+                                   u"\u23e9"
+                                   u"\u231a"
+                                   u"\ufe0f"  # dingbats
+                                   u"\u3030"
+                                   "]+", flags=re.UNICODE)
+        return emoji_pattern.sub(r'', text)
 
     def parse_sentence(self, text):
         """
@@ -34,32 +58,30 @@ class Parse:
         text_tokens_without_stopwords = [w.lower() for w in text_tokens if w not in self.stop_words]
         return text_tokens_without_stopwords
 
-    def parse_doc(self, doc_as_list, idx):
+    def parse_doc(self, doc_as_list, idx=-1):
         """
         This function takes a tweet document as list and break it into different fields
         :param doc_as_list: list re-preseting the tweet.
         :return: Document object with corresponding fields.
         """
-        if idx in self.tweets_with_terms_to_fix.keys():
-            doc_as_list[2] = self.fix_word_with_future_change(idx, doc_as_list[2])
-            doc_as_list[5] = self.fix_word_with_future_change(idx, doc_as_list[5])
 
         tweet_id = doc_as_list[0]
         tweet_date = doc_as_list[1]
         full_text = doc_as_list[2]
         full_text = self.parse_all_text(
-            full_text)  # parse text with our functions, need to parse this one or retweet text?
+            full_text, idx)  # parse text with our functions, need to parse this one or retweet text?
         url = doc_as_list[3]
         url = self.parse_URL(url)
         indices = doc_as_list[4]
         retweet_text = doc_as_list[5]
         retweet_text=self.parse_all_text(
-            retweet_text)
+            retweet_text, idx)
         retweet_url = doc_as_list[6]
         retweet_url = self.parse_URL(url)
         retweet_indices = doc_as_list[7]
         quote_text = doc_as_list[8]
         quote_url = doc_as_list[9]
+
         term_dict = {}
         tokenized_text = self.parse_sentence(full_text)
         doc_length = len(tokenized_text)  # after text operations.
@@ -76,15 +98,17 @@ class Parse:
 
     # returns a list of all the terms in the URL divided by /, = and .
 
-    def parse_all_text(self, text):
+    def parse_all_text(self, text, idx):
         if text is None:
             return text
         text.replace("/n", "")
+        text = self.deEmojify(text)
         copy_text = text.split()
         num_flag = False
         temp_num = ""
         self.parse_Entities(text)  # need to pass self?
         count = 0
+        copy_text = [w for w in copy_text if w.lower() not in self.stop_words]
         for word in copy_text:
             if (num_flag):  # if found number on previous iteration
                 if word == "Thousand" or word == "Million" or word == "Billion" or word == "million" or word == "billion" or word == "thousand":
@@ -107,6 +131,11 @@ class Parse:
             elif word.find('%') > -1 or word.find('percent') > -1 or word.find('percentage') > -1 or word.find(
                     'Percentage') > -1 or word.find('Percent') > -1:
                 copy_text[count] = self.parse_precentage(word)
+
+            elif word in self.countries_codes["Code"]:
+                index = self.countries_codes["Code"].index(word)
+                copy_text[count] = self.countries_codes["Name"][index]
+
             elif word[0].isnumeric(): # if found number check next word
                 word = word.replace(",", "")
                 try: #BigSmallLetters:
@@ -119,6 +148,7 @@ class Parse:
             if count == len(copy_text) and num_flag:
                 copy_text[count - 1] = self.parse_clean_number(temp_num)
         parsed_text_as_str = ' '.join(copy_text)
+        parsed_text_as_str = self.word_to_lower(parsed_text_as_str, idx)
         return parsed_text_as_str
 
     def parse_URL(self, URL):
@@ -168,7 +198,9 @@ class Parse:
                 final_word += temp[1:]
                 final_word = final_word.replace("_", " ")
                 final_word = final_word.replace("-", "")
-                final_word = re.sub(r"([A-Z])", r" \1", final_word)
+                all_capital = self.check_capital(text)
+                if not all_capital:
+                    final_word = re.sub(r"([A-Z])", r" \1", final_word)
                 # final_word=final_word.replace(' ','')
                 final_word_as_lst = str.split(final_word, " ") + list_to_add
                 if (len(parseList) == idx):
@@ -207,8 +239,6 @@ class Parse:
 
         return mylist
 
-
-
     def parse_big_number(self, text):
         text = text.replace(",", "")
 
@@ -219,33 +249,44 @@ class Parse:
     def parse_Entities(self, text):
         doc = self.nlp(text)
         for entity in doc.ents:
-
-            if (entity in self.suspucious_words_for_entites):  # if term already exists
-                self.suspucious_words_for_entites[entity] += 1
-            else:
-                self.suspucious_words_for_entites[entity] = 1
+            if entity.label_ is not "DATE" and entity.label_ is not "CARDINAL" and entity.label_ is not "QUANTITY" and "@" not in str(entity):
+                if str(entity) in self.suspucious_words_for_entites.keys():
+                    self.suspucious_words_for_entites[str(entity)] += text.count(str(entity))
+                else:
+                    self.suspucious_words_for_entites[str(entity)] = text.count(str(entity))
 
     def word_to_lower(self, text, idx):
         if text is None:
             return text
         words_list = text.split()
         for word in words_list:
+            word = re.sub('[0-9\[\]/"{},.:-]+', '', word)
             if not word.isalpha() or word.lower() in self.stop_words or "#" in word:
                 continue
             if word.islower() and word not in self.word_set:
                 self.word_set.add(word)
 
-            if word[0].isupper():
+            elif word[0].isupper():
                 if word.lower() not in self.word_set:
                     self.word_set.add(word)
                     self.add_word_to_future_change(idx, word)
                 else:
                     text = text.replace(word, word.lower())
+                    if word in self.word_set:
+                        self.word_set.remove(word)
 
 
         text = ' '.join(words_list)
 
         return text
+
+    def check_capital(self, text):
+        if "#" in text:
+            text = text.replace("#", "")
+        for letter in text:
+            if (letter.isnumeric() == False and letter.isupper() == False):
+                return False
+        return True
 
     def add_word_to_future_change(self, idx, word):
         if word is None or not word.isalpha():
@@ -266,27 +307,4 @@ class Parse:
             else:
                 text = text.replace(word, word.upper())
         return text
-
-    def deEmojify(text):
-        emoji_pattern = re.compile("["
-       u"\U0001F600-\U0001F64F"  # emoticons
-       u"\U0001F300-\U0001F5FF"  # symbols & pictographs
-       u"\U0001F680-\U0001F6FF"  # transport & map symbols
-       u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
-       u"\U00002500-\U00002BEF"  # chinese char
-       u"\U00002702-\U000027B0"
-       u"\U00002702-\U000027B0"
-       u"\U000024C2-\U0001F251"
-       u"\U0001f926-\U0001f937"
-       u"\U00010000-\U0010ffff"
-       u"\u2640-\u2642"
-       u"\u2600-\u2B55"
-       u"\u200d"
-       u"\u23cf"
-       u"\u23e9"
-       u"\u231a"
-       u"\ufe0f"  # dingbats
-       u"\u3030"
-       "]+", flags=re.UNICODE)
-        return emoji_pattern.sub(r'', text)
 
