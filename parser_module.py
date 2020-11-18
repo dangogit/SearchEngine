@@ -19,10 +19,11 @@ class Parse:
     def __init__(self):
         self.stop_words = stopwords.words('english')
         self.suspucious_words_for_entites = {}  # dictionary of suspicious words for entites, key is the term and value is the nubmer of apperances
-        self.word_set = set()
+        self.word_dict = {}
         self.tweets_with_terms_to_fix = {}
         self.countries_codes = pd.read_csv("countries_codes").to_dict(orient='list')
         self.nlp = spacy.load("en_core_web_sm")
+        self.curr_idx = -1
 
     def deEmojify(self, text):
         emoji_pattern = re.compile("["
@@ -58,7 +59,7 @@ class Parse:
         text_tokens_without_stopwords = [w.lower() for w in text_tokens if w not in self.stop_words]
         return text_tokens_without_stopwords
 
-    def parse_doc(self, doc_as_list, idx=-1):
+    def parse_doc(self, doc_as_list):
         """
         This function takes a tweet document as list and break it into different fields
         :param doc_as_list: list re-preseting the tweet.
@@ -69,13 +70,13 @@ class Parse:
         tweet_date = doc_as_list[1]
         full_text = doc_as_list[2]
         full_text = self.parse_all_text(
-            full_text, idx)  # parse text with our functions, need to parse this one or retweet text?
+            full_text, self.curr_idx)  # parse text with our functions, need to parse this one or retweet text?
         url = doc_as_list[3]
         url = self.parse_URL(url)
         indices = doc_as_list[4]
         retweet_text = doc_as_list[5]
         retweet_text=self.parse_all_text(
-            retweet_text, idx)
+            retweet_text, self.curr_idx)
         retweet_url = doc_as_list[6]
         retweet_url = self.parse_URL(url)
         retweet_indices = doc_as_list[7]
@@ -109,6 +110,7 @@ class Parse:
         self.parse_Entities(text)  # need to pass self?
         count = 0
         copy_text = [w for w in copy_text if w.lower() not in self.stop_words]
+        copy_text = self.word_to_lower(' '.join(copy_text), idx).split()
         for word in copy_text:
             if (num_flag):  # if found number on previous iteration
                 if word == "Thousand" or word == "Million" or word == "Billion" or word == "million" or word == "billion" or word == "thousand":
@@ -134,7 +136,7 @@ class Parse:
 
             elif word in self.countries_codes["Code"]:
                 index = self.countries_codes["Code"].index(word)
-                copy_text[count] = self.countries_codes["Name"][index]
+                copy_text[count] = self.countries_codes["Name"][index].upper()
 
             elif word[0].isnumeric(): # if found number check next word
                 word = word.replace(",", "")
@@ -148,7 +150,6 @@ class Parse:
             if count == len(copy_text) and num_flag:
                 copy_text[count - 1] = self.parse_clean_number(temp_num)
         parsed_text_as_str = ' '.join(copy_text)
-        parsed_text_as_str = self.word_to_lower(parsed_text_as_str, idx)
         return parsed_text_as_str
 
     def parse_URL(self, URL):
@@ -259,21 +260,29 @@ class Parse:
         if text is None:
             return text
         words_list = text.split()
+        count = 0
         for word in words_list:
             word = re.sub('[0-9\[\]/"{},.:-]+', '', word)
             if not word.isalpha() or word.lower() in self.stop_words or "#" in word:
+                count+=1
                 continue
-            if word.islower() and word not in self.word_set:
-                self.word_set.add(word)
+
+            if word.islower():
+                if word in self.word_dict.keys():
+                    self.word_dict[word] += 1
+                else:
+                    self.word_dict[word] = 1
 
             elif word[0].isupper():
-                if word.lower() not in self.word_set:
-                    self.word_set.add(word)
+                if word.lower() not in self.word_dict:
+                    self.word_dict[word] = 1
                     self.add_word_to_future_change(idx, word)
                 else:
-                    text = text.replace(word, word.lower())
-                    if word in self.word_set:
-                        self.word_set.remove(word)
+                    if word in self.word_dict:
+                        del self.word_dict[word]
+                        self.word_dict[word.lower()] += 1
+                    words_list[count] = word.lower()
+            count+=1
 
 
         text = ' '.join(words_list)
@@ -302,7 +311,7 @@ class Parse:
         if text is None:
             return text
         for word in self.tweets_with_terms_to_fix[idx]:
-            if word.lower() in self.word_set:
+            if word.lower() in self.word_dict.keys():
                 text = text.replace(word, word.lower())
             else:
                 text = text.replace(word, word.upper())

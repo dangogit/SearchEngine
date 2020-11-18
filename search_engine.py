@@ -30,32 +30,33 @@ def run_engine():
                         new_path = new_path + "\\" + filename;
                         documents_list = r.read_file(new_path)  #holds list of the tweets as text
                         tweet_list += documents_list
-    # Iterate over every document in the file
+
     before = []
     after = []
-
-     #   tweet_list[idx][2] = p.word_to_lower(tweet_list[idx][2], idx)
-    #    tweet_list[idx][5] = p.word_to_lower(tweet_list[idx][5], idx)
 
 
     for idx, document in enumerate(tweet_list):
         # parse the document
         print("num of doucments:"+str(number_of_documents+1))
         before.append(document[2])
-        parsed_document = p.parse_doc(document, idx)
+        p.curr_idx = idx
+        parsed_document = p.parse_doc(document)
         parsed_tweets.append(parsed_document)
         number_of_documents += 1
-        if number_of_documents == 100:
+        if number_of_documents == 1000:
             break
 
     for idx, parsed_document in enumerate(parsed_tweets):
+        p.curr_idx = idx
         if idx in p.tweets_with_terms_to_fix.keys():
             parsed_document.full_text = p.fix_word_with_future_change(idx, parsed_document.full_text)
             parsed_document.retweet_text = p.fix_word_with_future_change(idx, parsed_document.retweet_text)
-        # index the document data
+
         after.append(parsed_document.full_text)
+        # index the document data
         indexer.add_new_doc(parsed_document)
 
+    # testing:
     for i in range(len(before)-1):
         print("*******************************************************************************************")
         print("Before: tweet number(" + str(i) + ")")
