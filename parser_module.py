@@ -75,8 +75,8 @@ class Parse:
         url = self.parse_URL(url)
         indices = doc_as_list[4]
         retweet_text = doc_as_list[5]
-        retweet_text=self.parse_all_text(
-            retweet_text, self.curr_idx)
+        #retweet_text=self.parse_all_text(
+         #   retweet_text, self.curr_idx)
         retweet_url = doc_as_list[6]
         retweet_url = self.parse_URL(url)
         retweet_indices = doc_as_list[7]
@@ -274,16 +274,18 @@ class Parse:
                     self.word_dict[word] = 1
 
             elif word[0].isupper():
-                if word.lower() not in self.word_dict:
+                if word.lower() in self.word_dict.keys():
+                    if word in self.word_dict.keys():
+                        del self.word_dict[word]
+                    try:
+                        self.word_dict[word.lower()] += 1
+                    except KeyError:
+                        self.word_dict[word] = 1
+                    words_list[count] = word.lower()
+                else:
                     self.word_dict[word] = 1
                     self.add_word_to_future_change(idx, word)
-                else:
-                    if word in self.word_dict:
-                        del self.word_dict[word]
-                        self.word_dict[word.lower()] += 1
-                    words_list[count] = word.lower()
             count+=1
-
 
         text = ' '.join(words_list)
 
