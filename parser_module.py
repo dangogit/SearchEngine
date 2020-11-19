@@ -107,7 +107,7 @@ class Parse:
         copy_text = text.split()
         num_flag = False
         temp_num = ""
-        self.parse_Entities(text)  # need to pass self?
+        #self.parse_Entities(text)  # need to pass self?
         count = 0
         copy_text = [w for w in copy_text if w.lower() not in self.stop_words]
         copy_text = self.word_to_lower(' '.join(copy_text), idx).split()
