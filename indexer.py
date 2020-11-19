@@ -11,6 +11,7 @@ class Indexer:
         self.word_dict = word_dict
         self.key = 0
         self.curr = 0
+        self.term_index = 0
         self.updated_terms = {}
 
     def add_new_doc(self, document, idx):
@@ -39,13 +40,16 @@ class Indexer:
                 if term not in self.inverted_idx.keys():
                     number_of_docs = 1
                     index_in_post = self.key
+                    self.term_index+=1
+                    term_index = self.term_index
                 else:
-                    number_of_docs = self.inverted_idx[term][0] + 1
-                    index_in_post = self.inverted_idx[term][2]
+                    number_of_docs = self.inverted_idx[term][1] + 1
+                    index_in_post = self.inverted_idx[term][3]
+                    term_index = self.inverted_idx[term][0]
 
-                self.inverted_idx[term] = (number_of_docs, freq, index_in_post)
+                self.inverted_idx[term] = (term_index, number_of_docs, freq, index_in_post)
 
-                self.postingDict[self.curr] = [self.key, idx, document_dictionary[term], self.index_term_in_text(term, document.full_text), document.doc_length, self.count_unique(document_dictionary)]
+                self.postingDict[self.curr] = [term_index, idx, document_dictionary[term], self.index_term_in_text(term, document.full_text), document.doc_length, self.count_unique(document_dictionary)]
             except:
                 print('problem with the following key {}'.format(term))
 
@@ -78,29 +82,29 @@ class Indexer:
         return count
 
     def update_posting_file(self):
-        #'index', 'doc#', 'freq', 'location_list', 'n', 'unique num of words'
+        #'term_index' , 'doc#', 'freq', 'location_list', 'n', 'unique num of words'
         print("updating posting file")
         fmt = '%Y-%m-%d %H:%M:%S'
         d1 = datetime.strptime(datetime.now().strftime(fmt), fmt)
         d1_ts = time.mktime(d1.timetuple())
         print("loading json")
-        print(datetime.now())
         try:
             df = pd.read_json("posting_file.json", lines=True)
+            df.columns = ['1', '2', '3', '4', '5', '6']
         except:
             df = pd.DataFrame(self.postingDict.values(), columns=['1', '2', '3', '4', '5', '6'])
             df.to_json("posting_file.json", orient='records', lines=True)
             return
-        print("loaded json")
-        print(datetime.now())
-        for term in self.updated_terms:
-            index_in_posting_file = self.inverted_idx[term][2]+self.inverted_idx[term][0]-1
-            line = pd.DataFrame([self.postingDict[self.updated_terms[term]]], columns=['1', '2', '3', 'l4', '5', '6'])
+        df2 = pd.DataFrame(self.postingDict.values(), columns=['1', '2', '3', '4', '5', '6'])
+        df3 = pd.concat([df, df2]).sort_values(by=['1', '2'], ascending=True)
+        #for term in self.updated_terms:
+            #index_in_posting_file = self.inverted_idx[term][2]+self.inverted_idx[term][0]-1
+            #line = pd.DataFrame([self.postingDict[self.updated_terms[term]]], columns=['1', '2', '3', 'l4', '5', '6', '7'])
             #print("concat:")
             #print(datetime.now())
-            df = pd.concat([df.iloc[:index_in_posting_file], line, df.iloc[index_in_posting_file:]]).reset_index(drop=True)
+            #df = pd.concat([df.iloc[:index_in_posting_file], line, df.iloc[index_in_posting_file:]]).reset_index(drop=True)
             #print(datetime.now())
-        df.to_json("posting_file.json", orient='records', lines=True)
+        df3.to_json("posting_file.json", orient='records', lines=True)
         d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
         d2_ts = time.mktime(d2.timetuple())
         print(str(int(d2_ts-d1_ts)) + " seconds")

@@ -8,7 +8,7 @@ import search_engine
 from parser_module import Parse
 from reader import ReadFile
 from urllib.parse import urlparse
-
+import pandas as pd
 
 if __name__ == '__main__':
     search_engine.main()
@@ -16,6 +16,12 @@ if __name__ == '__main__':
     #newReader.Read_Files()
     #testing:
    # print(re.sub('[0-9\[\]/"{},.:-]+', '', "COVID-19:"))
+    df = pd.read_json("posting_file.json", lines=True)
+    df.columns = ['1', '2', '3', '4', '5', '6']
+    print(df.sort_values(by=['1', '2'], ascending=True))
+    df = pd.DataFrame([['1','aa'],['2','bb']], columns=['f','s'])
+    df2 = pd.DataFrame([['0','cc'],['3','dd']], columns=['f','s'])
+    print(pd.concat([df, df2]).sort_values(by=['f'], ascending=True))
     p = Parse()
     text = p.parse_all_text("CongressWoman Alexandria Ocasio-Cortez has announced Google as a crime syndicate Google")
     print(text)
