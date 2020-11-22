@@ -3,7 +3,7 @@ import re
 import nltk
 import spacy
 
-
+import pandas as pd
 import search_engine
 from parser_module import Parse
 from reader import ReadFile
@@ -13,6 +13,29 @@ from nltk.stem import LancasterStemmer
 
 
 
+
+def parse_entites(text):
+    proccesing_word=False
+    temp_term=""
+    entity_list=[]
+    word_list=str.split(text," ")
+    for i in range(len(word_list)):
+        if word_list[i][0].isupper()==False and proccesing_word==True:
+            check_list=str.split(temp_term)
+            if (len(check_list) > 1):
+                entity_list.append(temp_term)
+            temp_term=""
+            proccesing_word=False
+        elif i==len(word_list)-1 and proccesing_word==True:
+            temp_term = temp_term + " " + word_list[i]
+            if(len(temp_term)>1):
+                entity_list.append(temp_term)
+        elif word_list[i][0].isupper()==True:
+            temp_term = temp_term + " " + word_list[i]
+            proccesing_word = True
+    return entity_list
+
+
 if __name__ == '__main__':
     #search_engine.main()
     #newReader= ReadFile(r"C:\Users\dorle\Data")
@@ -20,20 +43,7 @@ if __name__ == '__main__':
     #testing:
    # print(re.sub('[0-9\[\]/"{},.:-]+', '', "COVID-19:"))
     p = Parse()
-    #text = p.parse_all_text("CongressWoman Alexandria Ocasio-Cortez has announced Google as a crime syndicate Google")
-    #print(text)
+    df = pd.DataFrame([[1, 2], [3, 4]], columns=list('AB'))
 
-    porter = PorterStemmer()
-    lancaster = LancasterStemmer()
 
-    print("Porter Stemmer")
-    print(porter.stem("cats"))
-    print(porter.stem("trouble"))
-    print(porter.stem("troubling"))
-    print(porter.stem("troubled"))
-    print("Lancaster Stemmer")
-    print(lancaster.stem("cats"))
-    print(lancaster.stem("trouble"))
-    print(lancaster.stem("troubling"))
-    print(lancaster.stem("troubled"))
 
