@@ -1,4 +1,5 @@
 import os
+import time
 
 from reader import ReadFile
 from configuration import ConfigClass
@@ -7,7 +8,7 @@ from indexer import Indexer
 from searcher import Searcher
 import utils
 
-
+from datetime import datetime
 def run_engine():
     """
 
@@ -19,8 +20,13 @@ def run_engine():
     config = ConfigClass()
     r = ReadFile(corpus_path=config.get__corpusPath())
     p = Parse()
-    indexer = Indexer(config)
+    indexer = Indexer(config, p.word_dict)
+    fmt = '%Y-%m-%d %H:%M:%S'
 
+
+    print("Reading files...")
+    d1 = datetime.strptime(datetime.now().strftime(fmt), fmt)
+    d1_ts = time.mktime(d1.timetuple())
     for subdir, dirs, files in os.walk(r.corpus_path):
         for dir in dirs:
             new_path = r.corpus_path + "\\" + dir
@@ -33,31 +39,38 @@ def run_engine():
 
     before = []
     after = []
+    print("Finished reading files.")
+    d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
+    d2_ts = time.mktime(d2.timetuple())
+    print(str(int(d2_ts-d1_ts)) + " seconds")
 
-
+    print("Parsing documents...")
+    d1 = datetime.strptime(datetime.now().strftime(fmt), fmt)
+    d1_ts = time.mktime(d1.timetuple())
     for idx, document in enumerate(tweet_list):
         # parse the document
-        print("num of doucments:"+str(number_of_documents+1))
-        before.append(document[2])
+        #print("num of doucments:"+str(number_of_documents+1))
+        #before.append(document[2])
         p.curr_idx = idx
         parsed_document = p.parse_doc(document)
         parsed_tweets.append(parsed_document)
         number_of_documents += 1
-        if number_of_documents == 1000:
-            break
 
+    print("Indexing documents...")
     for idx, parsed_document in enumerate(parsed_tweets):
         p.curr_idx = idx
         if idx in p.tweets_with_terms_to_fix.keys():
             parsed_document.full_text = p.fix_word_with_future_change(idx, parsed_document.full_text)
-            parsed_document.retweet_text = p.fix_word_with_future_change(idx, parsed_document.retweet_text)
 
-        after.append(parsed_document.full_text)
+        #after.append(parsed_document.full_text)
         # index the document data
-        indexer.add_new_doc(parsed_document)
-
+        indexer.add_new_doc(parsed_document, idx)
+    print("Finished parsing and indexing documents")
+    d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
+    d2_ts = time.mktime(d2.timetuple())
+    print(str(int(d2_ts-d1_ts)/60) + " minutes")
     # testing:
-    for i in range(len(before)-1):
+    for i in range(0):
         print("*******************************************************************************************")
         print("Before: tweet number(" + str(i) + ")")
         print(before[i])
