@@ -2,9 +2,22 @@ import time
 from datetime import datetime
 import pandas as pd
 import json
+import collections
+
+
 class Indexer:
 
     def __init__(self, config, word_dict):
+        #new_dictonaries
+        ############################################
+        self.posting_hashtag_dict={}
+        self.posting_tag_dict={}
+        self.posting_dict_a_to_c={}
+        self.posting_dict_d_to_h = {}
+        self.posting_dict_i_to_o = {}
+        self.posting_dict_p_to_r = {}
+        self.posting_dict_s_to_z = {}
+        ############################################
         self.inverted_idx = {}
         self.postingDict = {}
         self.config = config
@@ -12,7 +25,7 @@ class Indexer:
         self.key = 0
         self.curr = 0
         self.term_index = 0
-        #self.updated_terms = {}
+        self.updated_terms = {}
 
     def add_new_doc(self, document, doc_idx):
         """
@@ -21,50 +34,64 @@ class Indexer:
         :param document: a document need to be indexed.
         :return: -
         """
+
         document_dictionary = document.term_doc_dictionary
         # Go over each term in the doc
         for term in document_dictionary.keys():
             try:
                 if not term.isalpha():
                     continue
-                    #find term freq in doc
+                # freq of term in all corpus
                 if term.lower() in self.word_dict.keys():
-                    freq = self.word_dict[term.lower()]
+                    freq_in_corpus = self.word_dict[term.lower()]
                 elif term in self.word_dict.keys():
-                    freq = self.word_dict[term]
+                    freq_in_corpus = self.word_dict[term]
                 else:
                     self.word_dict[term] = 1
-                    freq = 1
+                    freq_in_corpus = 1
 
                 # Update inverted index and posting
                 if term not in self.inverted_idx.keys():
                     number_of_docs = 1
-                    index_in_post = self.key
-                    self.term_index+=1
-                    term_index = self.term_index
                 else:
                     number_of_docs = self.inverted_idx[term][1] + 1
-                    index_in_post = self.inverted_idx[term][3]
-                    term_index = self.inverted_idx[term][0]
 
-                self.inverted_idx[term] = (term_index, number_of_docs, freq, index_in_post)
-                self.inverted_idx = sorted(self.inverted_idx)
-                print(self.inverted_idx)
+                self.inverted_idx[term] = (number_of_docs, freq_in_corpus, 0)
 
-                self.postingDict[self.curr] = [term_index, doc_idx, document_dictionary[term], self.index_term_in_text(term, document.full_text), document.doc_length, self.count_unique(document_dictionary)]
+                #send curruent doucment to it's proper posting file
+                self.term_to_posting_dict(term, doc_idx, document, number_of_docs, self.count_unique(document.document_dictionary))
+                #self.postingDict[self.curr] = [term_index, doc_idx, document_dictionary[term], self.index_term_in_text(term, document.full_text), document.doc_length, self.count_unique(document_dictionary)]
             except:
                 print('problem with the following key {}'.format(term))
 
-
-            self.key += 1
-            #self.updated_terms[term] = self.curr
             self.curr += 1
 
             if self.curr==1000000:
+                #sort the dictionaries, update them and write them to json file
                 self.update_posting_file()
                 self.curr = 0
-                #self.updated_terms.clear()
                 self.postingDict.clear()
+
+    def term_to_posting_dict(self, term, doc_idx, document, number_of_docs, count_unique):
+        key = term.lower() + str(number_of_docs)
+        freq_in_doc = document.document_dictionary[term]
+        idx_list_in_doc = self.index_term_in_text(term, document.full_text)
+
+        if 'a' <= term[0] <= 'd':
+            self.posting_dict_a_to_d[key] = [doc_idx, freq_in_doc,
+            idx_list_in_doc, document.doc_length, count_unique]
+
+        if 'e' <= term[0] <= 'h':
+            self.posting_dict_a_to_d[key] = [doc_idx, freq_in_doc,
+            idx_list_in_doc, document.doc_length, count_unique]
+
+        if 'i' <= term[0] <= 'p':
+            self.posting_dict_a_to_d[key] = [doc_idx, freq_in_doc,
+            idx_list_in_doc, document.doc_length, count_unique]
+
+        if 'q' <= term[0] <= 'z':
+            self.posting_dict_a_to_d[key] = [doc_idx, freq_in_doc,
+            idx_list_in_doc, document.doc_length, count_unique]
 
     def index_term_in_text(self, term, text):
         indexes = []
@@ -83,13 +110,46 @@ class Indexer:
                 count += 1
         return count
 
+
+    def sort_dictionarys(self,dictionary):
+        return {k: dictionary[k] for k in sorted(dictionary)}
+        #dictionary1= collections.OrderedDict(sorted(dictionary1.items()))
+
+
+
+
     def update_posting_file(self):
         #'term_index' , 'doc#', 'freq', 'location_list', 'n', 'unique num of words'
         print("updating posting file")
         fmt = '%Y-%m-%d %H:%M:%S'
         d1 = datetime.strptime(datetime.now().strftime(fmt), fmt)
         d1_ts = time.mktime(d1.timetuple())
+
+        #sort all dictionaries here
+
+        self.posting_dict_a_to_c=self.sort_dictionarys(self.posting_dict_a_to_c)
+        self.posting_dict_d_to_h=self.sort_dictionarys(self.posting_dict_d_to_h)
+        self.posting_dict_i_to_o=self.sort_dictionarys(self.posting_dict_i_to_o)
+        self.posting_dict_p_to_r=self.sort_dictionarys(self.posting_dict_p_to_r)
+        self.posting_dict_s_to_z=self.sort_dictionarys(self.posting_dict_s_to_z)
+        self.posting_hashtag_dict=self.sort_dictionarys(self.posting_hashtag_dict)
+        self.posting_tag_dict=self.sort_dictionarys(self.posting_tag_dict)
+
+
+        # opening json file, should open all files
         print("loading json")
+        #*************************
+        #new method
+        #*************************
+
+        try:
+            with open("posting_file.json") as posting_file:
+                data =json.load(posting_file)
+        except:
+            print("loading did not go well")
+
+
+
         try:
             df = pd.read_json("posting_file.json", lines=True)
             df.columns = ['1', '2', '3', '4', '5', '6']
