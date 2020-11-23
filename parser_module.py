@@ -24,6 +24,7 @@ class Parse:
         self.countries_codes = pd.read_csv("countries_codes").to_dict(orient='list')
         self.nlp = spacy.load("en_core_web_sm")
         self.curr_idx = -1
+        self.letter_count = {}
 
     def deEmojify(self, text):
         emoji_pattern = re.compile("["
@@ -71,6 +72,13 @@ class Parse:
         full_text = doc_as_list[2]
         full_text = self.parse_all_text(
             full_text, self.curr_idx)  # parse text with our functions, need to parse this one or retweet text?
+
+        splitted_text = full_text.split()
+        for word in splitted_text:
+            if word[0].lower() in self.letter_count.keys():
+                self.letter_count[word[0].lower()] += 1
+            else:
+                self.letter_count[word[0].lower()] = 1
         url = doc_as_list[3]
         url = self.parse_URL(url)
         indices = doc_as_list[4]
@@ -82,6 +90,7 @@ class Parse:
         retweet_indices = doc_as_list[7]
         quote_text = doc_as_list[8]
         quote_url = doc_as_list[9]
+
 
         term_dict = {}
         tokenized_text = self.parse_sentence(full_text)
@@ -95,6 +104,7 @@ class Parse:
 
         document = Document(tweet_id, tweet_date, full_text, url, retweet_text, retweet_url, quote_text,
                             quote_url, term_dict, doc_length)
+
         return document
 
     # returns a list of all the terms in the URL divided by /, = and .
@@ -232,9 +242,12 @@ class Parse:
         millnames = ['', 'K', 'M', 'B']
         n = float(text)
         # print(n)
-        millidx = max(0, min(len(millnames) - 1,
+        try:
+            millidx = max(0, min(len(millnames) - 1,
                              int(math.floor(0 if n == 0 else math.log10(abs(n)) / 3))))
-
+        except:
+            print("problem parsing number: " +str(n))
+            return str(n)
 
         mylist = '{:2.3f}{}'.format(n / 10 ** (3 * millidx), millnames[millidx])
 

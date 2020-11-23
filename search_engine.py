@@ -6,6 +6,7 @@ from configuration import ConfigClass
 from parser_module import Parse
 from indexer import Indexer
 from searcher import Searcher
+import pandas as pd
 import utils
 
 from datetime import datetime
@@ -65,7 +66,8 @@ def run_engine():
     d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
     d2_ts = time.mktime(d2.timetuple())
     print(str(int(d2_ts - d1_ts) / 60) + " minutes")
-
+    df = pd.DataFrame(p.letter_count, columns=['letter', 'count'])
+    df.to_json("letter_count.json", orient='records', lines=True)
     number_of_documents = 0
     print("Indexing documents...")
     d1 = datetime.strptime(datetime.now().strftime(fmt), fmt)

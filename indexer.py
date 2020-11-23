@@ -12,9 +12,9 @@ class Indexer:
         self.key = 0
         self.curr = 0
         self.term_index = 0
-        self.updated_terms = {}
+        #self.updated_terms = {}
 
-    def add_new_doc(self, document, idx):
+    def add_new_doc(self, document, doc_idx):
         """
         This function perform indexing process for a document object.
         Saved information is captures via two dictionaries ('inverted index' and 'posting')
@@ -48,20 +48,22 @@ class Indexer:
                     term_index = self.inverted_idx[term][0]
 
                 self.inverted_idx[term] = (term_index, number_of_docs, freq, index_in_post)
+                self.inverted_idx = sorted(self.inverted_idx)
+                print(self.inverted_idx)
 
-                self.postingDict[self.curr] = [term_index, idx, document_dictionary[term], self.index_term_in_text(term, document.full_text), document.doc_length, self.count_unique(document_dictionary)]
+                self.postingDict[self.curr] = [term_index, doc_idx, document_dictionary[term], self.index_term_in_text(term, document.full_text), document.doc_length, self.count_unique(document_dictionary)]
             except:
                 print('problem with the following key {}'.format(term))
 
 
             self.key += 1
-            self.updated_terms[term] = self.curr
+            #self.updated_terms[term] = self.curr
             self.curr += 1
 
             if self.curr==1000000:
                 self.update_posting_file()
                 self.curr = 0
-                self.updated_terms.clear()
+                #self.updated_terms.clear()
                 self.postingDict.clear()
 
     def index_term_in_text(self, term, text):
