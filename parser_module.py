@@ -17,6 +17,7 @@ class Parse:
     # 3. tests
 
     def __init__(self):
+        self.asci_code_to_remove={33:None,34:None,36:None, 38:None,39:None,40:None,41:None,42:None,43:None,44:None,45:" ",46:None,58:None,59:None,60:None,61:None,62:None,63:None,91:None,92:None,93:None,94:None,96:None,123:None,124:None,125:None,126:None}
         self.stop_words = stopwords.words('english')
         self.suspucious_words_for_entites = {}  # dictionary of suspicious words for entites, key is the term and value is the nubmer of apperances
         self.word_dict = {}
@@ -69,8 +70,9 @@ class Parse:
         tweet_id = doc_as_list[0]
         tweet_date = doc_as_list[1]
         full_text = doc_as_list[2]
-        full_text = self.parse_all_text(
+        terms_list = self.parse_all_text(
             full_text, self.curr_idx)  # parse text with our functions, need to parse this one or retweet text?
+        full_text = ' '.join(terms_list)
         url = doc_as_list[3]
         url = self.parse_URL(url)
         indices = doc_as_list[4]
@@ -84,10 +86,10 @@ class Parse:
         quote_url = doc_as_list[9]
 
         term_dict = {}
-        tokenized_text = self.parse_sentence(full_text)
-        doc_length = len(tokenized_text)  # after text operations.
+        #tokenized_text = self.parse_sentence(full_text)
+        doc_length = len(terms_list)  # after text operations.
 
-        for term in tokenized_text:
+        for term in terms_list:
             if term not in term_dict.keys():
                 term_dict[term] = 1
             else:
@@ -102,15 +104,19 @@ class Parse:
     def parse_all_text(self, text, idx):
         if text is None:
             return text
-        text.replace("/n", "")
-        text = self.deEmojify(text)
+        text = text.replace("/n","")
+        text=text.translate(self.asci_code_to_remove)
+        #text.replace("/n", "").replace("-", "").replace(",", "").replace(".","").replace(":","").replace("!","")\
+        #.replace('"','').replace("&","").replace("(","").replace(")","").replace("*","").replace("+","")\
+        #.replace(";","").replace(">"," ").replace("<","").replace("?","")
+        #text = self.deEmojify(text)
         copy_text = text.split()
         num_flag = False
         temp_num = ""
-        self.parse_Entities(text)  # need to pass self?
+        #self.parse_Entities(text)  # need to pass self?
         count = 0
         copy_text = [w for w in copy_text if w.lower() not in self.stop_words]
-        copy_text = self.word_to_lower(' '.join(copy_text), idx).split()
+        copy_text = self.check_word_lowercase(copy_text, idx)
         for word in copy_text:
             if (num_flag):  # if found number on previous iteration
                 if word == "Thousand" or word == "Million" or word == "Billion" or word == "million" or word == "billion" or word == "thousand":
@@ -149,8 +155,7 @@ class Parse:
             count += 1
             if count == len(copy_text) and num_flag:
                 copy_text[count - 1] = self.parse_clean_number(temp_num)
-        parsed_text_as_str = ' '.join(copy_text)
-        return parsed_text_as_str
+        return copy_text
 
     def parse_URL(self, URL):
         parsed = urlparse(URL, allow_fragments=True)
@@ -180,7 +185,7 @@ class Parse:
         list_to_add = []
         temp_txt = text
         # if "_" in temp_txt:
-        temp_txt = temp_txt.replace("_", "").replace("-", "")
+        temp_txt = temp_txt.replace("_", "")
         temp_txt = temp_txt.lower()
         list_to_add.append(temp_txt)
         list_with_numbers = re.split('(\d+)', text)
@@ -218,8 +223,6 @@ class Parse:
         return text.replace("percentage", "%").replace("percent", "%").replace(" ", "")
 
     def parse_clean_number(self, text):
-        text = text.replace(",", "")
-        text = text.replace(":", "")
         millfullnames = ["Thousand", "Million", "Billion", "million", "billion", "thousand"]
         if text in millfullnames:
             return text
@@ -256,14 +259,13 @@ class Parse:
                 else:
                     self.suspucious_words_for_entites[str(entity)] = text.count(str(entity))
 
-    def word_to_lower(self, text, idx):
-        if text is None:
-            return text
-        words_list = text.split()
+    def check_word_lowercase(self, words_list, idx):
+        if words_list is None:
+            return words_list
         count = 0
         for word in words_list:
-            word = re.sub('[0-9\[\]/"{},.:-]+', '', word)
-            if not word.isalpha() or word.lower() in self.stop_words or "#" in word:
+            #word = re.sub('[0-9\[\]/"{},.:-]+', '', word)
+            if not word.isalpha() or "#" in word:
                 count+=1
                 continue
 
@@ -287,9 +289,7 @@ class Parse:
                     self.add_word_to_future_change(idx, word)
             count+=1
 
-        text = ' '.join(words_list)
-
-        return text
+        return words_list
 
     def check_capital(self, text):
         if "#" in text:

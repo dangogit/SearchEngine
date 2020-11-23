@@ -9,6 +9,7 @@ from searcher import Searcher
 import utils
 
 from datetime import datetime
+
 def run_engine():
     """
 
@@ -37,26 +38,44 @@ def run_engine():
                         documents_list = r.read_file(new_path)  #holds list of the tweets as text
                         tweet_list += documents_list
 
+
     before = []
     after = []
     print("Finished reading files.")
     d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
     d2_ts = time.mktime(d2.timetuple())
     print(str(int(d2_ts-d1_ts)) + " seconds")
-
+    total = len(tweet_list)
     print("Parsing documents...")
     d1 = datetime.strptime(datetime.now().strftime(fmt), fmt)
     d1_ts = time.mktime(d1.timetuple())
+    keeper = 0
     for idx, document in enumerate(tweet_list):
         # parse the document
-        #print("num of doucments:"+str(number_of_documents+1))
         #before.append(document[2])
         p.curr_idx = idx
         parsed_document = p.parse_doc(document)
         parsed_tweets.append(parsed_document)
         number_of_documents += 1
+        if int(float(number_of_documents + 1) / float(total) * 100) > keeper:
+            keeper = int(float(number_of_documents + 1) / float(total) * 100)
+            print("progress: " + str(keeper) + "%")
+        #add the doucment to indexer here
+        indexer.add_new_doc(parsed_document, idx)
 
+
+
+
+    print("Finished parsing documents")
+    d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
+    d2_ts = time.mktime(d2.timetuple())
+    print(str(int(d2_ts - d1_ts) / 60) + " minutes")
+
+    number_of_documents = 0
     print("Indexing documents...")
+    d1 = datetime.strptime(datetime.now().strftime(fmt), fmt)
+    d1_ts = time.mktime(d1.timetuple())
+    keeper = 0
     for idx, parsed_document in enumerate(parsed_tweets):
         p.curr_idx = idx
         if idx in p.tweets_with_terms_to_fix.keys():
@@ -65,10 +84,16 @@ def run_engine():
         #after.append(parsed_document.full_text)
         # index the document data
         indexer.add_new_doc(parsed_document, idx)
-    print("Finished parsing and indexing documents")
+
+        number_of_documents += 1
+        if int(float(number_of_documents + 1) / float(total) * 100) > keeper:
+            keeper = int(float(number_of_documents + 1) / float(total) * 100)
+            print("progress: " + str(keeper) + "%")
+
+    print("Finished indexing documents")
     d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
     d2_ts = time.mktime(d2.timetuple())
-    print(str(int(d2_ts-d1_ts)/60) + " minutes")
+    print(str(int(d2_ts - d1_ts) / 60) + " minutes")
     # testing:
     for i in range(0):
         print("*******************************************************************************************")
