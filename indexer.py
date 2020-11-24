@@ -97,9 +97,9 @@ class Indexer:
     # list of tuples(doc_num, number of apperances in doc)
     def differnce_method(self, list):
         for i in range(1, len(list)):
-                new_value = list[i][0] - list[i - 1][0]
-                tmp_tuple = (new_value, list[i][1])
-                list[i] = tmp_tuple
+            new_value = list[i][0] - list[i - 1][0]
+            tmp_tuple = (new_value, list[i][1])
+            list[i] = tmp_tuple
         return list
 
     def index_term_in_text(self, term, text):
