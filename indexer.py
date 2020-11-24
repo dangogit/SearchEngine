@@ -156,7 +156,7 @@ class Indexer:
         # a_to_c:
         # from json:
         try:
-            with open("posting_file_a_to_c.json", 'w', encoding='utf-8') as posting_file:
+            with open("posting_file_a_to_c.json", 'r', encoding='utf-8') as posting_file:
                 posting_dict_a_to_c_from_file = json.load(posting_file)
         except:
             posting_dict_a_to_c_from_file = {}
@@ -166,7 +166,7 @@ class Indexer:
         # to json:
         try:
             with open("posting_file_a_to_c.json", 'w', encoding='utf-8') as posting_file:
-                json.dump(posting_dict_a_to_c_to_file, posting_file, indent = 1)
+                json.dump(posting_dict_a_to_c_to_file, posting_file)
                 posting_dict_a_to_c_to_file.clear()
                 posting_dict_a_to_c_from_file.clear()
                 self.posting_dict_a_to_c.clear()
@@ -186,7 +186,7 @@ class Indexer:
         # to json:
         try:
             with open("posting_file_d_to_h.json", 'w', encoding='utf-8') as posting_file:
-                json.dump(posting_dict_d_to_h_to_file, posting_file, indent = 1)
+                json.dump(posting_dict_d_to_h_to_file, posting_file)
                 posting_dict_d_to_h_to_file.clear()
                 posting_dict_d_to_h_from_file.clear()
                 self.posting_dict_d_to_h.clear()
@@ -206,7 +206,7 @@ class Indexer:
         # to json:
         try:
             with open("posting_file_i_to_o.json", 'w', encoding='utf-8') as posting_file:
-                json.dump(posting_dict_i_to_o_to_file, posting_file, indent = 1)
+                json.dump(posting_dict_i_to_o_to_file, posting_file)
                 posting_dict_i_to_o_to_file.clear()
                 posting_dict_i_to_o_from_file.clear()
                 self.posting_dict_i_to_o.clear()
@@ -226,7 +226,7 @@ class Indexer:
         # to json:
         try:
             with open("posting_file_p_to_r.json", 'w', encoding='utf-8') as posting_file:
-                json.dump(posting_dict_p_to_r_to_file, posting_file, indent = 1)
+                json.dump(posting_dict_p_to_r_to_file, posting_file)
                 posting_dict_p_to_r_to_file.clear()
                 posting_dict_p_to_r_from_file.clear()
                 self.posting_dict_p_to_r.clear()
@@ -246,7 +246,7 @@ class Indexer:
         # to json:
         try:
             with open("posting_file_s_to_z.json", 'w', encoding='utf-8') as posting_file:
-                json.dump(posting_dict_s_to_z_to_file, posting_file, indent = 1)
+                json.dump(posting_dict_s_to_z_to_file, posting_file)
                 posting_dict_s_to_z_to_file.clear()
                 posting_dict_s_to_z_from_file.clear()
                 self.posting_dict_s_to_z.clear()
