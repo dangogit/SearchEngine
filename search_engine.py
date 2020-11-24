@@ -1,3 +1,4 @@
+import json
 import os
 import time
 
@@ -16,9 +17,7 @@ def run_engine():
 
     :return:
     """
-    number_of_documents = 0
-    tweet_list =[]
-    parsed_tweets = []
+
     config = ConfigClass()
     r = ReadFile(corpus_path=config.get__corpusPath())
     p = Parse()
@@ -29,6 +28,7 @@ def run_engine():
     print("Reading files...")
     d1 = datetime.strptime(datetime.now().strftime(fmt), fmt)
     d1_ts = time.mktime(d1.timetuple())
+
     for subdir, dirs, files in os.walk(r.corpus_path):
         for dir in dirs:
             new_path = r.corpus_path + "\\" + dir
@@ -36,55 +36,65 @@ def run_engine():
                 for filename in files:
                     if ".parquet" in filename:
                         new_path = new_path + "\\" + filename;
-                        documents_list = r.read_file(new_path)  #holds list of the tweets as text
+                        tweet_list = r.read_file(new_path)  #holds list of the tweets as text
+                        parse_and_index_tweet_list(tweet_list, fmt, p, indexer, filename)
 
-                        tweet_list += documents_list
 
-    del documents_list
-    print("Finished reading files.")
-    d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
-    d2_ts = time.mktime(d2.timetuple())
-    print(str(float(d2_ts-d1_ts)) + " seconds")
-    total = len(tweet_list)
-    print("Parsing and Indexing documents...")
-    d1 = datetime.strptime(datetime.now().strftime(fmt), fmt)
-    d1_ts = time.mktime(d1.timetuple())
-    keeper = 0
-    for idx, document in enumerate(tweet_list):
-        # parse the document
-        #before.append(document[2])
-        p.curr_idx = idx
-        parsed_document = p.parse_doc(document)
-        parsed_tweets.append(parsed_document)
-        tweet_list[idx] = None
-        number_of_documents += 1
-        if int(float(number_of_documents + 1) / float(total) * 100) > keeper:
-            keeper = int(float(number_of_documents + 1) / float(total) * 100)
-            print("progress: " + str(keeper) + "%")
-            d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
-            d2_ts = time.mktime(d2.timetuple())
-            print(str(float(d2_ts - d1_ts) / 60) + " minutes")
-        #add the doucment to indexer here
-        #indexer.add_new_doc(parsed_document, idx)
-
+    # testing:
     print("Finished Parsing and Indexing documents")
     d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
     d2_ts = time.mktime(d2.timetuple())
     print(str(float(d2_ts - d1_ts) / 60) + " minutes")
 
+    print("Saving data...")
+    utils.save_obj(indexer.inverted_idx, "inverted_idx")
+    utils.save_obj(indexer.postingDict, "posting")
+
+def parse_and_index_tweet_list(tweet_list, fmt, p, indexer, filename):
+    keeper = 0
     number_of_documents = 0
-    print("Fixing big&small letters in documents...")
+    total = len(tweet_list)
+    parsed_tweets = {}
+    print("Parsing and Indexing documents in file: "+ filename)
     d1 = datetime.strptime(datetime.now().strftime(fmt), fmt)
     d1_ts = time.mktime(d1.timetuple())
+
+    for idx, document in enumerate(tweet_list):
+        # parse the document
+        #before.append(document[2])
+        p.curr_idx = idx
+        parsed_document = p.parse_doc(document)
+        parsed_tweets[idx]=parsed_document
+        tweet_list[idx] = None
+        number_of_documents += 1
+        #add the doucment to indexer here
+        #indexer.add_new_doc(parsed_document, idx)
+
+    print("Finished Parsing and Indexing documents in file: "+ filename)
+    d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
+    d2_ts = time.mktime(d2.timetuple())
+    print(str(float(d2_ts - d1_ts) / 60) + " minutes")
+
+    new_filename = filename.replace(".snappy.parquet", ".json")
+    with open(new_filename, 'w', encoding='utf-8') as parsed_file:
+                json.dump(parsed_tweets, parsed_file)
+
+
+def fix_big_small_letters_in_documents(fmt, parsed_tweets, p):
     keeper = 0
+    number_of_documents = 0
+    total = len(parsed_tweets)
+    print("Fixing big&small letters in all documents...")
+    d1 = datetime.strptime(datetime.now().strftime(fmt), fmt)
+    d1_ts = time.mktime(d1.timetuple())
     for idx, parsed_document in enumerate(parsed_tweets):
         p.curr_idx = idx
         if idx in p.tweets_with_terms_to_fix.keys():
             parsed_document.full_text = p.fix_word_with_future_change(idx, parsed_document.full_text)
 
-        #after.append(parsed_document.full_text)
+        # after.append(parsed_document.full_text)
         # index the document data
-        #indexer.add_new_doc(parsed_document, idx)
+        # indexer.add_new_doc(parsed_document, idx)
 
         number_of_documents += 1
         if int(float(number_of_documents + 1) / float(total) * 100) > keeper:
@@ -95,10 +105,6 @@ def run_engine():
     d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
     d2_ts = time.mktime(d2.timetuple())
     print(str(float(d2_ts - d1_ts) / 60) + " minutes")
-    # testing:
-    print("Saving data...")
-    utils.save_obj(indexer.inverted_idx, "inverted_idx")
-    utils.save_obj(indexer.postingDict, "posting")
 
 def main(corpus_path, output_path, stemming, queries, num_docs_to_retrieve):
     '''

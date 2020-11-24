@@ -100,9 +100,11 @@ class Parse:
             else:
                 term_dict[term] += 1
 
-        document = Document(tweet_id, tweet_date, full_text, url,
-                             term_dict, doc_length)
-        return document
+        #document = Document(tweet_id, tweet_date, full_text, url,
+         #                    term_dict, doc_length)
+
+        return [tweet_id, tweet_date, full_text, url,
+                             term_dict, doc_length]
 
     # returns a list of all the terms in the URL divided by /, = and .
 
