@@ -16,11 +16,22 @@ def sort_Dict():
     dict['b'] = 5
     dict['c'] = 2
     dict['a'] = 1
-    dict['ab']= 4
-    dict['abc']=17
-    return {k: dict[k] for k in sorted(dict)}
-
-
+    dict['ab']=4
+    return collections.OrderedDict(sorted(dict.items()))
 if __name__ == '__main__':
-    lst=[(1,3),(4,7),(11,9)]
-    print(lst)
+
+
+    search_engine.main()
+    #newReader= ReadFile(r"C:\Users\dorle\Data")
+    #newReader.Read_Files()
+    #testing:
+   # print(re.sub('[0-9\[\]/"{},.:-]+', '', "COVID-19:"))
+
+
+
+
+
+
+
+
+

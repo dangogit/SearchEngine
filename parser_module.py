@@ -20,11 +20,12 @@ class Parse:
         self.asci_code_to_remove={33:None,34:None,36:None, 38:None,39:None,40:None,41:None,42:None,43:None,44:None,45:" ",46:None,58:None,59:None,60:None,61:None,62:None,63:None,91:None,92:None,93:None,94:None,96:None,123:None,124:None,125:None,126:None}
         self.stop_words = stopwords.words('english')
         self.suspucious_words_for_entites = {}  # dictionary of suspicious words for entites, key is the term and value is the nubmer of apperances
-        self.word_dict = {}
+        self.word_set = set()
         self.tweets_with_terms_to_fix = {}
         self.countries_codes = pd.read_csv("countries_codes").to_dict(orient='list')
         self.nlp = spacy.load("en_core_web_sm")
         self.curr_idx = -1
+        self.letter_count = {}
 
     def deEmojify(self, text):
         emoji_pattern = re.compile("["
@@ -90,6 +91,7 @@ class Parse:
         doc_length = len(terms_list)  # after text operations.
 
         for term in terms_list:
+            term = term.lower()
             if term not in term_dict.keys():
                 term_dict[term] = 1
             else:
@@ -104,8 +106,10 @@ class Parse:
     def parse_all_text(self, text, idx):
         if text is None:
             return text
+        text = text.encode('ascii', 'replace').decode()
         text = text.replace("/n","")
         text=text.translate(self.asci_code_to_remove)
+
         #text.replace("/n", "").replace("-", "").replace(",", "").replace(".","").replace(":","").replace("!","")\
         #.replace('"','').replace("&","").replace("(","").replace(")","").replace("*","").replace("+","")\
         #.replace(";","").replace(">"," ").replace("<","").replace("?","")
@@ -115,7 +119,8 @@ class Parse:
         temp_num = ""
         #self.parse_Entities(text)  # need to pass self?
         count = 0
-        copy_text = [w for w in copy_text if w.lower() not in self.stop_words]
+        # 35 <= ord(w[0]) <= 122 and
+        copy_text = [w for w in copy_text if w.lower() not in self.stop_words and not w[0] == "\/"]
         copy_text = self.check_word_lowercase(copy_text, idx)
         for word in copy_text:
             if (num_flag):  # if found number on previous iteration
@@ -235,9 +240,12 @@ class Parse:
         millnames = ['', 'K', 'M', 'B']
         n = float(text)
         # print(n)
-        millidx = max(0, min(len(millnames) - 1,
+        try:
+            millidx = max(0, min(len(millnames) - 1,
                              int(math.floor(0 if n == 0 else math.log10(abs(n)) / 3))))
-
+        except:
+            print(n)
+            return str(n)
 
         mylist = '{:2.3f}{}'.format(n / 10 ** (3 * millidx), millnames[millidx])
 
@@ -270,22 +278,13 @@ class Parse:
                 continue
 
             if word.islower():
-                if word in self.word_dict.keys():
-                    self.word_dict[word] += 1
-                else:
-                    self.word_dict[word] = 1
+                if word not in self.word_set:
+                    self.word_set.add(word)
 
             elif word[0].isupper():
-                if word.lower() in self.word_dict.keys():
-                    if word in self.word_dict.keys():
-                        del self.word_dict[word]
-                    try:
-                        self.word_dict[word.lower()] += 1
-                    except KeyError:
-                        self.word_dict[word] = 1
+                if word.lower() in self.word_set:
                     words_list[count] = word.lower()
                 else:
-                    self.word_dict[word] = 1
                     self.add_word_to_future_change(idx, word)
             count+=1
 
@@ -313,7 +312,7 @@ class Parse:
         if text is None:
             return text
         for word in self.tweets_with_terms_to_fix[idx]:
-            if word.lower() in self.word_dict.keys():
+            if word.lower() in self.word_set:
                 text = text.replace(word, word.lower())
             else:
                 text = text.replace(word, word.upper())

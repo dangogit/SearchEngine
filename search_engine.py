@@ -6,6 +6,7 @@ from configuration import ConfigClass
 from parser_module import Parse
 from indexer import Indexer
 from searcher import Searcher
+import pandas as pd
 import utils
 
 from datetime import datetime
@@ -21,10 +22,10 @@ def run_engine():
     config = ConfigClass()
     r = ReadFile(corpus_path=config.get__corpusPath())
     p = Parse()
-    indexer = Indexer(config, p.word_dict)
+    indexer = Indexer(config)
     fmt = '%Y-%m-%d %H:%M:%S'
 
-
+    print(datetime.now())
     print("Reading files...")
     d1 = datetime.strptime(datetime.now().strftime(fmt), fmt)
     d1_ts = time.mktime(d1.timetuple())
@@ -39,14 +40,12 @@ def run_engine():
                         tweet_list += documents_list
 
 
-    before = []
-    after = []
     print("Finished reading files.")
     d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
     d2_ts = time.mktime(d2.timetuple())
     print(str(int(d2_ts-d1_ts)) + " seconds")
     total = len(tweet_list)
-    print("Parsing documents...")
+    print("Parsing and Indexing documents...")
     d1 = datetime.strptime(datetime.now().strftime(fmt), fmt)
     d1_ts = time.mktime(d1.timetuple())
     keeper = 0
@@ -61,18 +60,15 @@ def run_engine():
             keeper = int(float(number_of_documents + 1) / float(total) * 100)
             print("progress: " + str(keeper) + "%")
         #add the doucment to indexer here
+        indexer.add_new_doc(parsed_document, idx)
 
-
-
-
-
-    print("Finished parsing documents")
+    print("Finished Parsing and Indexing documents")
     d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
     d2_ts = time.mktime(d2.timetuple())
     print(str(int(d2_ts - d1_ts) / 60) + " minutes")
 
     number_of_documents = 0
-    print("Indexing documents...")
+    print("Fixing big&small letters in documents...")
     d1 = datetime.strptime(datetime.now().strftime(fmt), fmt)
     d1_ts = time.mktime(d1.timetuple())
     keeper = 0
@@ -83,26 +79,19 @@ def run_engine():
 
         #after.append(parsed_document.full_text)
         # index the document data
-        indexer.add_new_doc(parsed_document, idx)
+        #indexer.add_new_doc(parsed_document, idx)
+
         number_of_documents += 1
         if int(float(number_of_documents + 1) / float(total) * 100) > keeper:
             keeper = int(float(number_of_documents + 1) / float(total) * 100)
             print("progress: " + str(keeper) + "%")
 
-    print("Finished indexing documents")
+    print("Finished fixing documents")
     d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
     d2_ts = time.mktime(d2.timetuple())
     print(str(int(d2_ts - d1_ts) / 60) + " minutes")
     # testing:
-    for i in range(0):
-        print("*******************************************************************************************")
-        print("Before: tweet number(" + str(i) + ")")
-        print(before[i])
-        print("                                  ")
-        print("After: tweet number(" + str(i) + ")")
-        print(after[i])
-        print("*******************************************************************************************")
-
+    print("Saving data...")
     utils.save_obj(indexer.inverted_idx, "inverted_idx")
     utils.save_obj(indexer.postingDict, "posting")
 
