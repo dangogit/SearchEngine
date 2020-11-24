@@ -22,7 +22,7 @@ def run_engine():
     config = ConfigClass()
     r = ReadFile(corpus_path=config.get__corpusPath())
     p = Parse()
-    indexer = Indexer(config, p.word_dict)
+    indexer = Indexer(config)
     fmt = '%Y-%m-%d %H:%M:%S'
 
     print(datetime.now())

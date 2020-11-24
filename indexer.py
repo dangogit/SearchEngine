@@ -7,7 +7,7 @@ import collections
 
 class Indexer:
 
-    def __init__(self, config, word_dict):
+    def __init__(self, config):
         #new_dictonaries
         ############################################
         self.posting_hashtag_dict={}
@@ -21,7 +21,6 @@ class Indexer:
         self.inverted_idx = {}
         self.postingDict = {}
         self.config = config
-        self.word_dict = word_dict
         self.key = 0
         self.curr = 0
         self.term_index = 0
