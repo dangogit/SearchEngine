@@ -61,7 +61,7 @@ def run_engine():
             keeper = int(float(number_of_documents + 1) / float(total) * 100)
             print("progress: " + str(keeper) + "%")
         #add the doucment to indexer here
-        indexer.add_new_doc(parsed_document, idx)
+
 
 
 
@@ -84,7 +84,6 @@ def run_engine():
         #after.append(parsed_document.full_text)
         # index the document data
         indexer.add_new_doc(parsed_document, idx)
-
         number_of_documents += 1
         if int(float(number_of_documents + 1) / float(total) * 100) > keeper:
             keeper = int(float(number_of_documents + 1) / float(total) * 100)
