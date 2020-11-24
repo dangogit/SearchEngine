@@ -34,32 +34,33 @@ class Indexer:
         :param document: a document need to be indexed.
         :return: -
         """
-
         document_dictionary = document.term_doc_dictionary
         # Go over each term in the doc
         for term in document_dictionary.keys():
             try:
+                unique_terms_in_doc = self.count_unique(document.document_dictionary)
                 if not term.isalpha():
                     continue
-                # freq of term in all corpus
-                if term.lower() in self.word_dict.keys():
-                    freq_in_corpus = self.word_dict[term.lower()]
-                elif term in self.word_dict.keys():
-                    freq_in_corpus = self.word_dict[term]
-                else:
-                    self.word_dict[term] = 1
-                    freq_in_corpus = 1
+                # freq of term in all corpus until now
+                term = term.lower()
+                freq_in_doc = document_dictionary[term]
 
-                # Update inverted index and posting
-                if term not in self.inverted_idx.keys():
+                if term in self.inverted_idx.keys():
+                    number_of_docs = self.inverted_idx[term][0] + 1
+                    freq_in_corpus = self.inverted_idx[term][1] + freq_in_doc
+                    docs_list = self.inverted_idx[term][2]
+                else:
                     number_of_docs = 1
-                else:
-                    number_of_docs = self.inverted_idx[term][1] + 1
+                    freq_in_corpus = freq_in_doc
+                    docs_list = []
 
-                self.inverted_idx[term] = (number_of_docs, freq_in_corpus, 0)
+                docs_list.append((doc_idx, freq_in_doc))
+
+                self.inverted_idx[term] = (number_of_docs, freq_in_corpus, self.differnce_method(docs_list))
 
                 #send curruent doucment to it's proper posting file
-                self.term_to_posting_dict(term, doc_idx, document, number_of_docs, self.count_unique(document.document_dictionary))
+
+                self.term_to_posting_dict(term, doc_idx, document, number_of_docs, unique_terms_in_doc)
                 #self.postingDict[self.curr] = [term_index, doc_idx, document_dictionary[term], self.index_term_in_text(term, document.full_text), document.doc_length, self.count_unique(document_dictionary)]
             except:
                 print('problem with the following key {}'.format(term))
@@ -92,6 +93,14 @@ class Indexer:
         if 'q' <= term[0] <= 'z':
             self.posting_dict_a_to_d[key] = [doc_idx, freq_in_doc,
             idx_list_in_doc, document.doc_length, count_unique]
+
+    # list of tuples(doc_num, number of apperances in doc)
+    def differnce_method(self, list):
+        for i in range(1, len(list)):
+                new_value = list[i][0] - list[i - 1][0]
+                tmp_tuple = (new_value, list[i][1])
+                list[i] = tmp_tuple
+        return list
 
     def index_term_in_text(self, term, text):
         indexes = []

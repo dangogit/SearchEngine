@@ -20,7 +20,7 @@ class Parse:
         self.asci_code_to_remove={33:None,34:None,36:None, 38:None,39:None,40:None,41:None,42:None,43:None,44:None,45:" ",46:None,58:None,59:None,60:None,61:None,62:None,63:None,91:None,92:None,93:None,94:None,96:None,123:None,124:None,125:None,126:None}
         self.stop_words = stopwords.words('english')
         self.suspucious_words_for_entites = {}  # dictionary of suspicious words for entites, key is the term and value is the nubmer of apperances
-        self.word_dict = {}
+        self.word_set = set()
         self.tweets_with_terms_to_fix = {}
         self.countries_codes = pd.read_csv("countries_codes").to_dict(orient='list')
         self.nlp = spacy.load("en_core_web_sm")
@@ -91,6 +91,7 @@ class Parse:
         doc_length = len(terms_list)  # after text operations.
 
         for term in terms_list:
+            term = term.lower()
             if term not in term_dict.keys():
                 term_dict[term] = 1
             else:
@@ -277,22 +278,13 @@ class Parse:
                 continue
 
             if word.islower():
-                if word in self.word_dict.keys():
-                    self.word_dict[word] += 1
-                else:
-                    self.word_dict[word] = 1
+                if word not in self.word_set:
+                    self.word_set.add(word)
 
             elif word[0].isupper():
-                if word.lower() in self.word_dict.keys():
-                    if word in self.word_dict.keys():
-                        del self.word_dict[word]
-                    try:
-                        self.word_dict[word.lower()] += 1
-                    except KeyError:
-                        self.word_dict[word] = 1
+                if word.lower() in self.word_set:
                     words_list[count] = word.lower()
                 else:
-                    self.word_dict[word] = 1
                     self.add_word_to_future_change(idx, word)
             count+=1
 
@@ -320,7 +312,7 @@ class Parse:
         if text is None:
             return text
         for word in self.tweets_with_terms_to_fix[idx]:
-            if word.lower() in self.word_dict.keys():
+            if word.lower() in self.word_set:
                 text = text.replace(word, word.lower())
             else:
                 text = text.replace(word, word.upper())
