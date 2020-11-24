@@ -70,7 +70,7 @@ class Indexer:
 
             self.curr += 1
 
-            if self.curr==1000000:
+            if self.curr==10000000:
                 #sort the dictionaries, update them and write them to json file
                 self.update_posting_file()
                 self.curr = 0

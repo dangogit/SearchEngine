@@ -37,13 +37,14 @@ def run_engine():
                     if ".parquet" in filename:
                         new_path = new_path + "\\" + filename;
                         documents_list = r.read_file(new_path)  #holds list of the tweets as text
+
                         tweet_list += documents_list
 
-
+    del documents_list
     print("Finished reading files.")
     d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
     d2_ts = time.mktime(d2.timetuple())
-    print(str(int(d2_ts-d1_ts)) + " seconds")
+    print(str(float(d2_ts-d1_ts)) + " seconds")
     total = len(tweet_list)
     print("Parsing and Indexing documents...")
     d1 = datetime.strptime(datetime.now().strftime(fmt), fmt)
@@ -55,17 +56,21 @@ def run_engine():
         p.curr_idx = idx
         parsed_document = p.parse_doc(document)
         parsed_tweets.append(parsed_document)
+        tweet_list[idx] = None
         number_of_documents += 1
         if int(float(number_of_documents + 1) / float(total) * 100) > keeper:
             keeper = int(float(number_of_documents + 1) / float(total) * 100)
             print("progress: " + str(keeper) + "%")
+            d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
+            d2_ts = time.mktime(d2.timetuple())
+            print(str(float(d2_ts - d1_ts) / 60) + " minutes")
         #add the doucment to indexer here
-        indexer.add_new_doc(parsed_document, idx)
+        #indexer.add_new_doc(parsed_document, idx)
 
     print("Finished Parsing and Indexing documents")
     d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
     d2_ts = time.mktime(d2.timetuple())
-    print(str(int(d2_ts - d1_ts) / 60) + " minutes")
+    print(str(float(d2_ts - d1_ts) / 60) + " minutes")
 
     number_of_documents = 0
     print("Fixing big&small letters in documents...")
@@ -89,7 +94,7 @@ def run_engine():
     print("Finished fixing documents")
     d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
     d2_ts = time.mktime(d2.timetuple())
-    print(str(int(d2_ts - d1_ts) / 60) + " minutes")
+    print(str(float(d2_ts - d1_ts) / 60) + " minutes")
     # testing:
     print("Saving data...")
     utils.save_obj(indexer.inverted_idx, "inverted_idx")
