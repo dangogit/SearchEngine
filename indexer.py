@@ -35,14 +35,14 @@ class Indexer:
         :return: -
         """
         document_dictionary = document.term_doc_dictionary
+        unique_terms_in_doc = self.count_unique(document.document_dictionary)
         # Go over each term in the doc
         for term in document_dictionary.keys():
             try:
-                unique_terms_in_doc = self.count_unique(document.document_dictionary)
+
                 if not term.isalpha():
                     continue
                 # freq of term in all corpus until now
-                term = term.lower()
                 freq_in_doc = document_dictionary[term]
 
                 if term in self.inverted_idx.keys():
