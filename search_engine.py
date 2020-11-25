@@ -60,7 +60,7 @@ def run_engine():
             keeper = int(float(number_of_documents + 1) / float(total) * 100)
             print("progress: " + str(keeper) + "%")
         #add the doucment to indexer here
-        indexer.add_new_doc(parsed_document, idx)
+        #indexer.add_new_doc(parsed_document, idx)
 
     print("Finished Parsing and Indexing documents")
     d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)

@@ -1,7 +1,4 @@
 import math
-import spacy
-from django.core.validators import URLValidator
-from django.core.exceptions import ValidationError
 import pandas as pd
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
@@ -20,35 +17,13 @@ class Parse:
         self.asci_code_to_remove={33:None,34:None,36:None, 38:None,39:None,40:None,41:None,42:None,43:None,44:None,45:" ",46:None,58:None,59:None,60:None,61:None,62:None,63:None,91:None,92:None,93:None,94:None,96:None,123:None,124:None,125:None,126:None}
         self.stop_words = stopwords.words('english')
         self.suspucious_words_for_entites = {}  # dictionary of suspicious words for entites, key is the term and value is the nubmer of apperances
-        self.word_set = set()
+        self.word_set = {}
         self.tweets_with_terms_to_fix = {}
         self.countries_codes = pd.read_csv("countries_codes").to_dict(orient='list')
-        self.nlp = spacy.load("en_core_web_sm")
         self.curr_idx = -1
         self.letter_count = {}
 
-    def deEmojify(self, text):
-        emoji_pattern = re.compile("["
-       u"\U0001F600-\U0001F64F"  # emoticons
-       u"\U0001F300-\U0001F5FF"  # symbols & pictographs
-       u"\U0001F680-\U0001F6FF"  # transport & map symbols
-       u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
-       u"\U00002500-\U00002BEF"  # chinese char
-       u"\U00002702-\U000027B0"
-       u"\U00002702-\U000027B0"
-       u"\U000024C2-\U0001F251"
-       u"\U0001f926-\U0001f937"
-       u"\U00010000-\U0010ffff"
-       u"\u2640-\u2642"
-       u"\u2600-\u2B55"
-       u"\u200d"
-       u"\u23cf"
-       u"\u23e9"
-       u"\u231a"
-       u"\ufe0f"  # dingbats
-       u"\u3030"
-       "]+", flags=re.UNICODE)
-        return emoji_pattern.sub(r'', text)
+
 
     def parse_sentence(self, text):
         """
@@ -75,13 +50,13 @@ class Parse:
             full_text, self.curr_idx)  # parse text with our functions, need to parse this one or retweet text?
         full_text = ' '.join(terms_list)
         url = doc_as_list[3]
-        url = self.parse_URL(url)
+        #url = self.parse_URL(url)
         indices = doc_as_list[4]
         retweet_text = doc_as_list[5]
         #retweet_text=self.parse_all_text(
          #   retweet_text, self.curr_idx)
         retweet_url = doc_as_list[6]
-        retweet_url = self.parse_URL(url)
+        #retweet_url = self.parse_URL(url)
         retweet_indices = doc_as_list[7]
         quote_text = doc_as_list[8]
         quote_url = doc_as_list[9]
@@ -138,8 +113,8 @@ class Parse:
                 # in case a million appeared without any number before it
                 copy_text[count] = self.parse_big_number(word)
             # if hastag
-            if word[0] == "#":
-                copy_text[count] = self.parse_hashtag(word)
+           # if word[0] == "#":
+                #copy_text[count] = self.parse_hashtag(word)
 
             elif word.find('%') > -1 or word.find('percent') > -1 or word.find('percentage') > -1 or word.find(
                     'Percentage') > -1 or word.find('Percent') > -1:
@@ -278,11 +253,11 @@ class Parse:
                 continue
 
             if word.islower():
-                if word not in self.word_set:
-                    self.word_set.add(word)
+                if word not in self.word_set.keys():
+                    self.word_set[word]=None
 
             elif word[0].isupper():
-                if word.lower() in self.word_set:
+                if word.lower() in self.word_set.keys():
                     words_list[count] = word.lower()
                 else:
                     self.add_word_to_future_change(idx, word)
