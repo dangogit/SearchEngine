@@ -14,7 +14,6 @@ import pandas as pd
 
 from datetime import datetime
 
-
 def parse_entites(text):
     lst=text.split()
     saw_big_letter=False
@@ -111,6 +110,10 @@ if __name__ == '__main__':
     print(string)
     print(hastag)
     #search_engine.main()
+    print("Hello and welocme to our search engine")
+
+    search_engine.main()
+
     #newReader= ReadFile(r"C:\Users\dorle\Data")
     #newReader.Read_Files()
     #testing:

@@ -1,6 +1,7 @@
 import json
 import os
 import time
+import traceback
 
 from reader import ReadFile
 from configuration import ConfigClass
@@ -23,9 +24,10 @@ def run_engine():
     p = Parse()
     indexer = Indexer(config)
     fmt = '%Y-%m-%d %H:%M:%S'
-
+    parsed_files_names = []
+    idx = 0
     print(datetime.now())
-    print("Reading files...")
+    print("[" + str(datetime.now()) + "] " + "Reading files...")
     d1 = datetime.strptime(datetime.now().strftime(fmt), fmt)
     d1_ts = time.mktime(d1.timetuple())
 
@@ -37,74 +39,74 @@ def run_engine():
                     if ".parquet" in filename:
                         new_path = new_path + "\\" + filename
                         tweet_list = r.read_file(new_path)  #holds list of the tweets as text
-                        parse_and_index_tweet_list(tweet_list, fmt, p, indexer, filename)
+                        idx = parse_and_index_tweet_list(tweet_list, fmt, p, indexer, filename, parsed_files_names, idx)
 
 
     # testing:
-    print("Finished Parsing and Indexing documents")
     d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
     d2_ts = time.mktime(d2.timetuple())
-    print(str(float(d2_ts - d1_ts) / 60) + " minutes")
+    print("[" + str(datetime.now()) + "] " + "Finished Parsing and Indexing documents in " + str(float(d2_ts - d1_ts) / 60) + " minutes")
 
-    print("Saving data...")
+    fix_big_small_letters_in_documents(fmt, p, parsed_files_names)
+
+    print("[" + str(datetime.now()) + "] " + "Saving data...")
     utils.save_obj(indexer.inverted_idx, "inverted_idx")
     utils.save_obj(indexer.postingDict, "posting")
 
-def parse_and_index_tweet_list(tweet_list, fmt, p, indexer, filename):
-    keeper = 0
-    number_of_documents = 0
-    total = len(tweet_list)
+def parse_and_index_tweet_list(tweet_list, fmt, p, indexer, filename, parsed_files_names, idx):
     parsed_tweets = {}
-    print("Parsing and Indexing documents in file: "+ filename)
+    print("[" + str(datetime.now()) + "] " + "Parsing and Indexing documents in file: "+ filename)
     d1 = datetime.strptime(datetime.now().strftime(fmt), fmt)
     d1_ts = time.mktime(d1.timetuple())
 
-    for idx, document in enumerate(tweet_list):
+    for document in tweet_list:
         # parse the document
         #before.append(document[2])
         p.curr_idx = idx
         parsed_document = p.parse_doc(document)
         parsed_tweets[idx]=parsed_document
-        tweet_list[idx] = None
-        number_of_documents += 1
         #add the doucment to indexer here
         #indexer.add_new_doc(parsed_document, idx)
-
-    print("Finished Parsing and Indexing documents in file: "+ filename)
-    d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
-    d2_ts = time.mktime(d2.timetuple())
-    print(str(float(d2_ts - d1_ts) / 60) + " minutes")
+        idx += 1
 
     new_filename = filename.replace(".snappy.parquet", ".json")
     with open(new_filename, 'w', encoding='utf-8') as parsed_file:
-                json.dump(parsed_tweets, parsed_file)
+        json.dump(parsed_tweets, parsed_file)
+        parsed_files_names.append(new_filename)
 
 
-def fix_big_small_letters_in_documents(fmt, parsed_tweets, p):
-    keeper = 0
-    number_of_documents = 0
-    total = len(parsed_tweets)
-    print("Fixing big&small letters in all documents...")
-    d1 = datetime.strptime(datetime.now().strftime(fmt), fmt)
-    d1_ts = time.mktime(d1.timetuple())
-    for idx, parsed_document in enumerate(parsed_tweets):
-        p.curr_idx = idx
-        if idx in p.tweets_with_terms_to_fix.keys():
-            parsed_document.full_text = p.fix_word_with_future_change(idx, parsed_document.full_text)
-
-        # after.append(parsed_document.full_text)
-        # index the document data
-        # indexer.add_new_doc(parsed_document, idx)
-
-        number_of_documents += 1
-        if int(float(number_of_documents + 1) / float(total) * 100) > keeper:
-            keeper = int(float(number_of_documents + 1) / float(total) * 100)
-            print("progress: " + str(keeper) + "%")
-
-    print("Finished fixing documents")
+    print("[" + str(datetime.now()) + "] " + "Finished Parsing and Indexing documents in file: " + filename)
     d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
     d2_ts = time.mktime(d2.timetuple())
-    print(str(float(d2_ts - d1_ts) / 60) + " minutes")
+    print(str(float(d2_ts - d1_ts)) + " seconds")
+
+    return idx
+
+def fix_big_small_letters_in_documents(fmt, p, parsed_files_names):
+    print("[" + str(datetime.now()) + "] " + "Fixing big&small letters in all documents...")
+    d1 = datetime.strptime(datetime.now().strftime(fmt), fmt)
+    d1_ts = time.mktime(d1.timetuple())
+    parsed_tweets_dict = {}
+    for filename in parsed_files_names:
+        try:
+            with open(filename, 'r', encoding='utf-8') as parsed_file:
+                parsed_tweets_dict = json.load(parsed_file)
+        except:
+            traceback.print_exc()
+        for index in parsed_tweets_dict.keys():
+            if int(index) in p.tweets_with_terms_to_fix.keys():
+                parsed_tweets_dict[index][2] = p.fix_word_with_future_change(int(index), parsed_tweets_dict[index][2])
+        # to json:
+        try:
+            with open(filename, 'w', encoding='utf-8') as parsed_file:
+                json.dump(parsed_tweets_dict, parsed_file)
+
+        except:
+            traceback.print_exc()
+
+    d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
+    d2_ts = time.mktime(d2.timetuple())
+    print("[" + str(datetime.now()) + "] " + "Finished fixing documents in "+str(float(d2_ts - d1_ts) / 60) + " minutes")
 
 def main(corpus_path, output_path, stemming, queries, num_docs_to_retrieve):
     '''
