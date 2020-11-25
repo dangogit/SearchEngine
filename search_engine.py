@@ -35,7 +35,7 @@ def run_engine():
             for subdir, dirs, files in os.walk(new_path):
                 for filename in files:
                     if ".parquet" in filename:
-                        new_path = new_path + "\\" + filename;
+                        new_path = new_path + "\\" + filename
                         tweet_list = r.read_file(new_path)  #holds list of the tweets as text
                         parse_and_index_tweet_list(tweet_list, fmt, p, indexer, filename)
 

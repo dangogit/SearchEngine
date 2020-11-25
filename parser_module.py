@@ -111,11 +111,12 @@ class Parse:
     def parse_all_text(self, text, doc_idx):
         if text is None:
             return text
-        #text = text.encode('ascii', 'replace').decode()
+        text = text.encode('ascii', 'replace').decode()
         text = text.replace("/n", "")
         text = text.translate(self.asci_code_to_remove)
         copy_text = text.split()
-        copy_text = [w for w in copy_text if 35 <= ord(w[0]) <= 122 and w.lower() not in self.stop_words.keys()]
+        # 35 <= ord(w[0]) <= 122
+        copy_text = [w for w in copy_text if w[0] != '\/' and w.lower() not in self.stop_words.keys()]
         count = 0
         for word in copy_text:
             #if word[0] == '#':

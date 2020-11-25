@@ -34,7 +34,7 @@ class Indexer:
         :param document: a document need to be indexed.
         :return: -
         """
-        document_dictionary = document.term_doc_dictionary
+        document_dictionary = document[4]
         unique_terms_in_doc = self.count_unique(document_dictionary)
         # Go over each term in the doc
         for term in document_dictionary.keys():
@@ -78,25 +78,25 @@ class Indexer:
 
     def term_to_posting_dict(self, term, doc_idx, freq_in_doc, document, number_of_docs, count_unique):
         key = term + " " + str(doc_idx)
-        idx_list_in_doc = self.index_term_in_text(term, document.full_text)
+        idx_list_in_doc = self.index_term_in_text(term, document[2])
 
         if 'a' <= term[0] <= 'c':
-            self.posting_dict_a_to_c[key] = [freq_in_doc, idx_list_in_doc, document.doc_length, count_unique]
+            self.posting_dict_a_to_c[key] = [freq_in_doc, idx_list_in_doc, document[5], count_unique]
 
         elif 'd' <= term[0] <= 'h':
-            self.posting_dict_d_to_h[key] = [freq_in_doc, idx_list_in_doc, document.doc_length, count_unique]
+            self.posting_dict_d_to_h[key] = [freq_in_doc, idx_list_in_doc, document[5], count_unique]
 
         elif 'i' <= term[0] <= 'o':
-            self.posting_dict_i_to_o[key] = [freq_in_doc, idx_list_in_doc, document.doc_length, count_unique]
+            self.posting_dict_i_to_o[key] = [freq_in_doc, idx_list_in_doc, document[5], count_unique]
 
         elif 'p' <= term[0] <= 'r':
-            self.posting_dict_p_to_r[key] = [freq_in_doc, idx_list_in_doc, document.doc_length, count_unique]
+            self.posting_dict_p_to_r[key] = [freq_in_doc, idx_list_in_doc, document[5], count_unique]
 
         elif 's' <= term[0] <= 'z':
-            self.posting_dict_s_to_z[key] = [freq_in_doc, idx_list_in_doc, document.doc_length, count_unique]
+            self.posting_dict_s_to_z[key] = [freq_in_doc, idx_list_in_doc, document[5], count_unique]
 
         elif term[0] == '#':
-            self.posting_hashtag_dict[key] = [freq_in_doc, idx_list_in_doc, document.doc_length, count_unique]
+            self.posting_hashtag_dict[key] = [freq_in_doc, idx_list_in_doc, document[5], count_unique]
 
     # list of tuples(doc_num, number of apperances in doc)
     def differnce_method(self, list, last_doc_index):
