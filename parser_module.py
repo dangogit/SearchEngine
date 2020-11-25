@@ -76,7 +76,10 @@ class Parse:
         full_text = doc_as_list[2]
         terms_list = self.parse_all_text(
             full_text, self.curr_idx)  # parse text with our functions, need to parse this one or retweet text?
-        full_text = ' '.join(terms_list)
+        try:
+            full_text = ' '.join(terms_list)
+        except:
+            print("a")
         url = doc_as_list[3]
         #url = self.parse_URL(url)
         #indices = doc_as_list[4]
@@ -114,12 +117,16 @@ class Parse:
         text = text.encode('ascii', 'replace').decode()
         text = text.replace("/n", "")
         text = text.translate(self.asci_code_to_remove)
+        self.parse_entites(text)
         copy_text = text.split()
         # 35 <= ord(w[0]) <= 122
         copy_text = [w for w in copy_text if w[0] != '\/' and w.lower() not in self.stop_words.keys()]
         count = 0
         for word in copy_text:
-            if word[0] == '@':
+            if word == '':
+                continue
+
+            elif word[0] == '@':
                 count += 1
                 continue
 
@@ -129,15 +136,12 @@ class Parse:
             elif word[0] == '#':
                 copy_text[count] = self.parse_hashtag(word)
 
-            elif '%' in word or 'percent' in word.lower():
-                copy_text[count] = self.parse_precentage(word)
-
             elif word[0].isnumeric(): # if found number check next word
                 word = word.replace(",", "") # 1,000 to 1000
                 try: #check if its only number
                     num = float(word)
                 except ValueError:
-                    del copy_text[count]
+                    copy_text[count] = ''
                     continue
                 if num >= 1000:
                     copy_text[count] = self.parse_clean_number(num)
@@ -145,8 +149,21 @@ class Parse:
                 elif count < len(copy_text) - 1:
                     next_word = copy_text[count+1]
                     if next_word == "Thousand" or next_word == "Million" or next_word == "Billion" or next_word == "million" or next_word == "billion" or next_word == "thousand":
-                        copy_text[count] = copy_text[count] + self.parse_big_number(next_word)
-                        del copy_text[count + 1]
+                        copy_text[count] = str(copy_text[count]) + str(self.parse_big_number(next_word))
+                        copy_text[count+1] = ''
+
+                    elif '%' in next_word or 'percent' in next_word.lower():
+                        copy_text[count] = str(word) + '%'
+                        copy_text[count + 1] = ''
+
+                    elif next_word[0].isnumeric() and '/' in next_word:
+                        try:  # check if its only number
+                            next_num = float(next_word)
+                        except ValueError:
+                            copy_text[count] = ''
+                            continue
+                        copy_text[count] = str(num + next_num)
+                        copy_text[count + 1] = ''
 
             elif word == "Thousand" or word == "Million" or word == "Billion" or word == "million" or word == "billion" or word == "thousand":
                 copy_text[count] = self.parse_big_number(word)
@@ -167,7 +184,7 @@ class Parse:
                         self.add_word_to_future_change(doc_idx, word)
             count += 1
 
-        return copy_text
+        return [w for w in copy_text if w != '']
 
     def check_numeric(self, text):
         for charcter in text:
@@ -175,9 +192,34 @@ class Parse:
                 return True
         return False
 
-    def parse_hastag(self, text):
+    def enter_to_entity_dict(self, term):
+        if term in self.suspucious_words_for_entites.keys():
+            self.suspucious_words_for_entites[term] += 1
+        else:
+            self.suspucious_words_for_entites[term] = 1
+
+    def parse_entites(self, text):
+        lst = text.split()
+        saw_big_letter = False
+        tmp_entity = ""
+        for idx, word in enumerate(lst):
+            if word[0].isupper() and saw_big_letter == True:
+                tmp_entity += " " + word
+                if (idx == len(lst) - 1):
+                    self.enter_to_entity_dict(tmp_entity)
+            elif word[0].isupper() and saw_big_letter == False:
+                saw_big_letter = True
+                tmp_entity += word
+            elif len(tmp_entity.split()) >= 2:
+                self.enter_to_entity_dict(tmp_entity)
+                tmp_entity = ""
+                saw_big_letter = False
+            else:
+                tmp_entity = ""
+
+    def parse_hashtag(self, text):
         tmp_word = ""
-        word_list = [text]
+        word_list = [text.lower()]
         contains_dash = False
         letter_index = 0
         if ("_" in text):
@@ -189,7 +231,7 @@ class Parse:
         if text.isupper() == True:  # in case all capital
             new_text = text.replace("#", "")
             word_list.append(new_text.lower())
-            return word_list
+            return ' '.join(word_list)
         elif contain_numeric == False and contains_dash == True:  # not numeric and no dashes
             list = text.split()
             word_list = word_list + list
@@ -219,13 +261,15 @@ class Parse:
         tmp_word = ""
         word_list = [url]
         # or replace on all : / -  and then split and join
-        url = url.replace(":", "").replace("//", "/")
+        url = url.replace("//", "/")
         for i in range(len(url)):
-            if (url[i] == ":" or url[i] == "." or url[i] == "/" or url[i] == "-" or url[i] == "_"):
+            if (url[i] == "/" or url[i] == "-" or url[i] == "_"):
                 word_list.append(tmp_word)
                 tmp_word = ""
-            else:
+            elif i != len(url) - 1:
                 tmp_word = tmp_word + url[i]
+            else:
+                word_list.append(tmp_word)
         return ' '.join(word_list)
 
     def parse_all_text2(self, text, idx):

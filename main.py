@@ -21,7 +21,10 @@ def sort_Dict():
 if __name__ == '__main__':
 
 
+    print("Hello and welocme to our search engine")
+
     search_engine.main()
+
     #newReader= ReadFile(r"C:\Users\dorle\Data")
     #newReader.Read_Files()
     #testing:
