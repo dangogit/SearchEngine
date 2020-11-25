@@ -12,15 +12,20 @@ class Indexer:
         #new_dictonaries
         ############################################
         self.posting_hashtag_dict={}
-        self.posting_tag_dict={}
         self.posting_dict_a_to_c = {}
         self.posting_dict_d_to_h = {}
         self.posting_dict_i_to_o = {}
         self.posting_dict_p_to_r = {}
         self.posting_dict_s_to_z = {}
         ############################################
-        self.inverted_idx = {}
-        self.postingDict = {}
+        self.inverted_idx_a_to_c = {}
+        self.inverted_idx_d_to_h = {}
+        self.inverted_idx_i_to_o = {}
+        self.inverted_idx_p_to_r = {}
+        self.inverted_idx_s_to_z = {}
+        self.inverted_idx_hashtag={}
+
+
         self.config = config
         self.key = 0
         self.curr = 0
@@ -58,11 +63,9 @@ class Indexer:
 
                 docs_list.append((doc_idx, freq_in_doc))
 
-                self.inverted_idx[term] = (number_of_docs, freq_in_corpus, self.differnce_method(docs_list, last_doc_idx), doc_idx)
-
+                #self.inverted_idx[term] = (number_of_docs, freq_in_corpus, self.differnce_method(docs_list, last_doc_idx), doc_idx)
                 #send curruent doucment to it's proper posting file
-
-                self.term_to_posting_dict(term, doc_idx, freq_in_doc, document, number_of_docs, unique_terms_in_doc)
+                self.term_to_posting_dict_and_inv_idx(term, doc_idx, freq_in_doc, document, number_of_docs, unique_terms_in_doc,freq_in_corpus,self.differnce_method(docs_list, last_doc_idx))
                 #self.postingDict[self.curr] = [term_index, doc_idx, document_dictionary[term], self.index_term_in_text(term, document.full_text), document.doc_length, self.count_unique(document_dictionary)]
             except:
                 print('problem with the following key {}'.format(term))
@@ -71,32 +74,34 @@ class Indexer:
             self.curr += 1
 
             if self.curr==1000000:
-                #sort the dictionaries, update them and write them to json file
-                self.update_posting_file()
+                self.update_posting_file() #this function updates and sorts the dictionries
+                #self.update_inverted_idx_files(document_dictionary,doc_idx)
                 self.curr = 0
 
-    def term_to_posting_dict(self, term, doc_idx, freq_in_doc, document, number_of_docs, count_unique):
+    def term_to_posting_dict_and_inv_idx(self,term, doc_idx, freq_in_doc, document, number_of_docs, unique_terms_in_doc,freq_in_corpus,doc_idx_list):
+
         key = term + " " + str(doc_idx)
         idx_list_in_doc = self.index_term_in_text(term, document[2])
 
         if 'a' <= term[0] <= 'c':
-            self.posting_dict_a_to_c[key] = [freq_in_doc, idx_list_in_doc, document[5], count_unique]
+            self.posting_dict_a_to_c[key] = [freq_in_doc, idx_list_in_doc, document[5], unique_terms_in_doc]
+            self.term_to_inverted_idx_a_to_c(number_of_docs,number_of_docs,freq_in_corpus,doc_idx_list,doc_idx)
 
         elif 'd' <= term[0] <= 'h':
-            self.posting_dict_d_to_h[key] = [freq_in_doc, idx_list_in_doc, document[5], count_unique]
-
+            self.posting_dict_d_to_h[key] = [freq_in_doc, idx_list_in_doc, document[5], unique_terms_in_doc]
+            self.term_to_inverted_idx_d_to_h(number_of_docs,number_of_docs,freq_in_corpus,doc_idx_list,doc_idx)
         elif 'i' <= term[0] <= 'o':
-            self.posting_dict_i_to_o[key] = [freq_in_doc, idx_list_in_doc, document[5], count_unique]
-
+            self.posting_dict_i_to_o[key] = [freq_in_doc, idx_list_in_doc, document[5], unique_terms_in_doc]
+            self.term_to_inverted_idx_i_to_o(number_of_docs,number_of_docs,freq_in_corpus,doc_idx_list,doc_idx)
         elif 'p' <= term[0] <= 'r':
-            self.posting_dict_p_to_r[key] = [freq_in_doc, idx_list_in_doc, document[5], count_unique]
-
+            self.posting_dict_p_to_r[key] = [freq_in_doc, idx_list_in_doc, document[5], unique_terms_in_doc]
+            self.term_to_inverted_idx_p_to_r(number_of_docs,number_of_docs,freq_in_corpus,doc_idx_list,doc_idx)
         elif 's' <= term[0] <= 'z':
-            self.posting_dict_s_to_z[key] = [freq_in_doc, idx_list_in_doc, document[5], count_unique]
-
+            self.posting_dict_s_to_z[key] = [freq_in_doc, idx_list_in_doc, document[5], unique_terms_in_doc]
+            self.term_to_inverted_idx_s_to_z(number_of_docs,number_of_docs,freq_in_corpus,doc_idx_list,doc_idx)
         elif term[0] == '#':
-            self.posting_hashtag_dict[key] = [freq_in_doc, idx_list_in_doc, document[5], count_unique]
-
+            self.posting_hashtag_dict[key] = [freq_in_doc, idx_list_in_doc, document[5], unique_terms_in_doc]
+            self.term_to_inverted_idx_hashtags(number_of_docs,number_of_docs,freq_in_corpus,doc_idx_list,doc_idx)
     # list of tuples(doc_num, number of apperances in doc)
     def differnce_method(self, list, last_doc_index):
         i = len(list) -1
@@ -150,7 +155,7 @@ class Indexer:
         self.posting_dict_p_to_r=self.sort_dictionarys(self.posting_dict_p_to_r)
         self.posting_dict_s_to_z=self.sort_dictionarys(self.posting_dict_s_to_z)
         self.posting_hashtag_dict=self.sort_dictionarys(self.posting_hashtag_dict)
-        self.inverted_idx={k: self.inverted_idx[k] for k in sorted(self.inverted_idx)}
+        #self.inverted_idx={k: self.inverted_idx[k] for k in sorted(self.inverted_idx)}
 
         # a_to_c:
         # from json:
@@ -251,24 +256,34 @@ class Indexer:
                 self.posting_dict_s_to_z.clear()
         except:
             traceback.print_exc()
-
-        #try:
-         #   df = pd.read_json("posting_file.json", lines=True)
-          #  df.columns = ['1', '2', '3', '4', '5', '6']
-        #except:
-         #   df = pd.DataFrame(self.postingDict.values(), columns=['1', '2', '3', '4', '5', '6'])
-          #  df.to_json("posting_file.json", orient='records', lines=True)
-           # return
-        #df2 = pd.DataFrame(self.postingDict.values(), columns=['1', '2', '3', '4', '5', '6'])
-        #df3 = pd.concat([df, df2]).sort_values(by=['1', '2'], ascending=True)
-        #for term in self.updated_terms:
-            #index_in_posting_file = self.inverted_idx[term][2]+self.inverted_idx[term][0]-1
-            #line = pd.DataFrame([self.postingDict[self.updated_terms[term]]], columns=['1', '2', '3', 'l4', '5', '6', '7'])
-            #print("concat:")
-            #print(datetime.now())
-            #df = pd.concat([df.iloc[:index_in_posting_file], line, df.iloc[index_in_posting_file:]]).reset_index(drop=True)
-            #print(datetime.now())
-        #df3.to_json("posting_file.json", orient='records', lines=True)
         d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
         d2_ts = time.mktime(d2.timetuple())
         print(str(float(d2_ts-d1_ts)/60) + " minutes")
+
+    def term_to_inverted_idx_a_to_c(self,term,number_of_docs,freq_in_corpus,doc_list,doc_idx):
+        self.inverted_idx_a_to_c[term]=(number_of_docs,freq_in_corpus,self.differnce_method(doc_list,doc_idx),doc_idx)
+
+    def term_to_inverted_idx_d_to_h(self, term, number_of_docs, freq_in_corpus, doc_list, doc_idx):
+        self.inverted_idx_d_to_h[term]=(number_of_docs,freq_in_corpus,self.differnce_method(doc_list,doc_idx),doc_idx)
+
+    def term_to_inverted_idx_i_to_o(self, term, number_of_docs, freq_in_corpus, doc_list, doc_idx):
+        self.inverted_idx_i_to_o[term]=(number_of_docs,freq_in_corpus,self.differnce_method(doc_list,doc_idx),doc_idx)
+
+    def term_to_inverted_idx_p_to_r(self, term, number_of_docs, freq_in_corpus, doc_list, doc_idx):
+        self.inverted_idx_p_to_r[term]=(number_of_docs,freq_in_corpus,self.differnce_method(doc_list,doc_idx),doc_idx)
+
+    def term_to_inverted_idx_s_to_z(self, term, number_of_docs, freq_in_corpus, doc_list, doc_idx):
+        self.inverted_idx_s_to_z[term]=(number_of_docs,freq_in_corpus,self.differnce_method(doc_list,doc_idx),doc_idx)
+
+    def term_to_inverted_idx_hashtags(self, term, number_of_docs, freq_in_corpus, doc_list, doc_idx):
+        self.inverted_idx_hashtag[term]=(number_of_docs,freq_in_corpus,self.differnce_method(doc_list,doc_idx),doc_idx)
+
+
+
+
+
+
+
+
+
+

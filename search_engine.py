@@ -8,12 +8,13 @@ from configuration import ConfigClass
 from parser_module import Parse
 from indexer import Indexer
 from searcher import Searcher
+from stemmer import Stemmer
 import pandas as pd
 import utils
 
 from datetime import datetime
 
-def run_engine():
+def run_engine(corpus_path = None, output_path = None, stemming=None):
     """
 
     :return:
@@ -22,6 +23,8 @@ def run_engine():
     config = ConfigClass()
     r = ReadFile(corpus_path=config.get__corpusPath())
     p = Parse()
+    if stemming:
+        p.steamer = Stemmer()
     indexer = Indexer(config)
     fmt = '%Y-%m-%d %H:%M:%S'
     parsed_files_names = []
@@ -61,7 +64,6 @@ def parse_and_index_tweet_list(tweet_list, fmt, p, indexer, filename, parsed_fil
 
     for document in tweet_list:
         # parse the document
-        #before.append(document[2])
         p.curr_idx = idx
         parsed_document = p.parse_doc(document)
         parsed_tweets[idx]=parsed_document
@@ -116,7 +118,10 @@ def main(corpus_path, output_path, stemming, queries, num_docs_to_retrieve):
     queries- צריך לתמוך בשתי אפשרויות, קובץ של שאילתות בו כל שורה מהווה שאילתא (יסופק לכם קובץ לדוגמא) או רשימה (list) של שאילתות כך שכל איבר ברשימה יהווה שאילתא.
     num_docs_to_retrieve - מספר מסמכים להחזרה עבור כל שאילתא.
     '''
-    return
+    run_engine(corpus_path, output_path, stemming)
+    inverted_index = load_index()
+    for doc_tuple in search_and_rank_query(queries, inverted_index, num_docs_to_retrieve):
+        print('tweet id: {}, score (unique common words with query): {}'.format(doc_tuple[0], doc_tuple[1]))
 
 
 def load_index():
