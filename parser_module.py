@@ -1,10 +1,17 @@
 import math
+
+import nltk
+import spacy
+from django.core.validators import URLValidator
+from django.core.exceptions import ValidationError
 import pandas as pd
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from document import Document
 from urllib.parse import urlparse
 import re
+import nltk
+
 
 
 class Parse:
@@ -15,13 +22,13 @@ class Parse:
 
     def __init__(self):
         self.asci_code_to_remove={33:None,34:None,36:None, 38:None,39:None,40:None,41:None,42:None,43:None,44:None,45:" ",46:None,58:None,59:None,60:None,61:None,62:None,63:None,91:None,92:None,93:None,94:None,96:None,123:None,124:None,125:None,126:None}
-        self.stop_words = stopwords.words('english')
+        self.stop_words = {k.lower(): "" for k in stopwords.words('english')}
         self.suspucious_words_for_entites = {}  # dictionary of suspicious words for entites, key is the term and value is the nubmer of apperances
         self.word_set = {}
         self.tweets_with_terms_to_fix = {}
-        self.countries_codes = pd.read_csv("countries_codes").to_dict(orient='list')
+      #  self.countries_codes = pd.read_csv("countries_codes").to_dict(orient='list')
+        #self.nlp = spacy.load("en_core_web_sm")
         self.curr_idx = -1
-        self.letter_count = {}
 
 
 
@@ -51,15 +58,15 @@ class Parse:
         full_text = ' '.join(terms_list)
         url = doc_as_list[3]
         #url = self.parse_URL(url)
-        indices = doc_as_list[4]
-        retweet_text = doc_as_list[5]
+        #indices = doc_as_list[4]
+        #retweet_text = doc_as_list[5]
         #retweet_text=self.parse_all_text(
          #   retweet_text, self.curr_idx)
-        retweet_url = doc_as_list[6]
+        #retweet_url = doc_as_list[6]
         #retweet_url = self.parse_URL(url)
         retweet_indices = doc_as_list[7]
-        quote_text = doc_as_list[8]
-        quote_url = doc_as_list[9]
+        #quote_text = doc_as_list[8]
+        #quote_url = doc_as_list[9]
 
         term_dict = {}
         #tokenized_text = self.parse_sentence(full_text)
@@ -72,13 +79,67 @@ class Parse:
             else:
                 term_dict[term] += 1
 
-        document = Document(tweet_id, tweet_date, full_text, url, retweet_text, retweet_url, quote_text,
-                            quote_url, term_dict, doc_length)
-        return document
+        #document = Document(tweet_id, tweet_date, full_text, url,
+         #                    term_dict, doc_length)
+
+        return [tweet_id, tweet_date, full_text, url,
+                             term_dict, doc_length]
 
     # returns a list of all the terms in the URL divided by /, = and .
 
-    def parse_all_text(self, text, idx):
+    def parse_all_text(self, text, doc_idx):
+        if text is None:
+            return text
+        text = text.encode('ascii', 'replace').decode()
+        text = text.replace("/n", "")
+        text = text.translate(self.asci_code_to_remove)
+        copy_text = text.split()
+        # 35 <= ord(w[0]) <= 122
+        copy_text = [w for w in copy_text if w[0] != '\/' and w.lower() not in self.stop_words.keys()]
+        count = 0
+        for word in copy_text:
+            #if word[0] == '#':
+             #   copy_text[count] = self.parse_hashtag(word)
+
+            if '%' in word or 'percent' in word.lower():
+                copy_text[count] = self.parse_precentage(word)
+
+            elif word[0].isnumeric(): # if found number check next word
+                word = word.replace(",", "") # 1,000 to 1000
+                try: #check if its only number
+                    num = float(word)
+                except ValueError:
+                    continue
+                if num >= 1000:
+                    copy_text[count] = self.parse_clean_number(num)
+
+                elif count < len(copy_text) - 1:
+                    next_word = copy_text[count+1]
+                    if next_word == "Thousand" or next_word == "Million" or next_word == "Billion" or next_word == "million" or next_word == "billion" or next_word == "thousand":
+                        copy_text[count + 1] = self.parse_big_number(next_word)
+
+            elif word == "Thousand" or word == "Million" or word == "Billion" or word == "million" or word == "billion" or word == "thousand":
+                copy_text[count] = self.parse_big_number(word)
+
+            #elif word in self.countries_codes["Code"]:
+             #   index = self.countries_codes["Code"].index(word)
+              #  copy_text[count] = self.countries_codes["Name"][index].upper()
+
+            elif word.isalpha() and '@' not in word and '#' not in word and '/' not in word and '.' not in word and ':' not in word and ',' not in word:
+                if word.islower():
+                    if word not in self.word_set.keys():
+                        self.word_set[word] = None
+
+                elif word[0].isupper():
+                    if word.lower() in self.word_set.keys():
+                        copy_text[count] = word.lower()
+                    else:
+                        self.add_word_to_future_change(doc_idx, word)
+            count += 1
+
+        return copy_text
+
+    def parse_all_text2(self, text, idx):
         if text is None:
             return text
         text = text.encode('ascii', 'replace').decode()
@@ -90,6 +151,7 @@ class Parse:
         #.replace(";","").replace(">"," ").replace("<","").replace("?","")
         #text = self.deEmojify(text)
         copy_text = text.split()
+
         num_flag = False
         temp_num = ""
         #self.parse_Entities(text)  # need to pass self?
@@ -113,8 +175,8 @@ class Parse:
                 # in case a million appeared without any number before it
                 copy_text[count] = self.parse_big_number(word)
             # if hastag
-           # if word[0] == "#":
-                #copy_text[count] = self.parse_hashtag(word)
+            if word[0] == "#":
+                copy_text[count] = self.parse_hashtag(word)
 
             elif word.find('%') > -1 or word.find('percent') > -1 or word.find('percentage') > -1 or word.find(
                     'Percentage') > -1 or word.find('Percent') > -1:
@@ -206,11 +268,6 @@ class Parse:
         millfullnames = ["Thousand", "Million", "Billion", "million", "billion", "thousand"]
         if text in millfullnames:
             return text
-        if ("/" in text):  # in case of fraction x/y
-            converted_num = float(text[0]) / float(text[2])
-            return str(converted_num)
-        if float(text) < 1000:
-            return text
 
         millnames = ['', 'K', 'M', 'B']
         n = float(text)
@@ -219,7 +276,6 @@ class Parse:
             millidx = max(0, min(len(millnames) - 1,
                              int(math.floor(0 if n == 0 else math.log10(abs(n)) / 3))))
         except:
-            print(n)
             return str(n)
 
         mylist = '{:2.3f}{}'.format(n / 10 ** (3 * millidx), millnames[millidx])
@@ -233,21 +289,41 @@ class Parse:
                                                                                                      'K').replace(
             'billion', 'B').replace('million', 'M')
 
-    def parse_Entities(self, text):
-        doc = self.nlp(text)
-        for entity in doc.ents:
-            if entity.label_ is not "DATE" and entity.label_ is not "CARDINAL" and entity.label_ is not "QUANTITY" and "@" not in str(entity):
-                if str(entity) in self.suspucious_words_for_entites.keys():
-                    self.suspucious_words_for_entites[str(entity)] += text.count(str(entity))
-                else:
-                    self.suspucious_words_for_entites[str(entity)] = text.count(str(entity))
+
+    def enter_to_entity_dict(self,term):
+        if term in self.suspucious_words_for_entites.keys():
+            self.suspucious_words_for_entites[term]+=1
+        else:
+            self.suspucious_words_for_entites[term]=1
+
+    # assumptions about entites:
+    # 1) entity is at minumum 2 word phrase
+    # 2) each letter in the entity starts with a big word
+
+    def parse_entites(self,text):
+        lst = text.split()
+        saw_big_letter = False
+        tmp_entity = ""
+        for idx, word in enumerate(lst):
+            if word[0].isupper() and saw_big_letter == True:
+                tmp_entity += " " + word
+                if (idx == len(lst) - 1):
+                    self.enter_to_entity_dict(tmp_entity)
+            elif word[0].isupper() and saw_big_letter == False:
+                saw_big_letter = True
+                tmp_entity += word
+            elif len(tmp_entity.split()) >= 2:
+                self.enter_to_entity_dict(tmp_entity)
+                tmp_entity = ""
+                saw_big_letter = False
+            else:
+                tmp_entity = ""
 
     def check_word_lowercase(self, words_list, idx):
         if words_list is None:
             return words_list
         count = 0
         for word in words_list:
-            #word = re.sub('[0-9\[\]/"{},.:-]+', '', word)
             if not word.isalpha() or "#" in word:
                 count+=1
                 continue

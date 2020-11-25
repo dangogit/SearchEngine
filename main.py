@@ -14,6 +14,29 @@ import pandas as pd
 
 from datetime import datetime
 
+
+def parse_entites(text):
+    lst=text.split()
+    saw_big_letter=False
+    tmp_entity=""
+    entity_list=[]
+    for idx,word in enumerate(lst):
+        if word[0].isupper() and saw_big_letter==True:
+            tmp_entity+=" "+word
+            if(idx==len(lst)-1):
+                entity_list.append(tmp_entity)
+        elif word[0].isupper() and saw_big_letter==False:
+            saw_big_letter=True
+            tmp_entity += word
+        elif len(tmp_entity.split())>=2:
+            entity_list.append(tmp_entity)
+            tmp_entity=""
+            saw_big_letter=False
+        else:
+            tmp_entity = ""
+    return entity_list
+
+
 def check_numeric(text):
     for charcter in text:
         if charcter.isdigit():
@@ -69,15 +92,20 @@ def parse_URL(url):
         if(url[i]==":" or url[i]=="." or url[i]=="/" or url[i]=="-" or url[i]=="_"):
             word_list.append(tmp_word)
             tmp_word=""
-        else:
+        elif i != len(url)-1:
             tmp_word=tmp_word+url[i]
+        else:
+            word_list.append(tmp_word)
     return ' '.join(word_list)
 
 
 
 if __name__ == '__main__':
-    url="https://www.foodnetwork.com/recipes/photos/foodnetwork-top-50-most-saved-recipes"
-    hastag="#TrumpForPresedient2020"
+    url="https://www.whathifi.com/best-buys/home-cinema/best-home-cinema-amplifiers"
+    hastag="#seeyouonthebeach"
+    entity_sentence="Donald Trump, is the president"
+    entity_sentence=entity_sentence.replace("-"," ").replace(","," ")
+    entities=parse_entites(entity_sentence)
     string=parse_URL(url)
     hastag=parse_hastag_new(hastag)
     print(string)
