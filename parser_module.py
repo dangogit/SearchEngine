@@ -145,11 +145,11 @@ class Parse:
                 elif count < len(copy_text) - 1:
                     next_word = copy_text[count+1]
                     if next_word == "Thousand" or next_word == "Million" or next_word == "Billion" or next_word == "million" or next_word == "billion" or next_word == "thousand":
-                        copy_text[count] = self.parse_big_number(next_word)
+                        copy_text[count] = copy_text[count] + self.parse_big_number(next_word)
+                        del copy_text[count + 1]
 
             elif word == "Thousand" or word == "Million" or word == "Billion" or word == "million" or word == "billion" or word == "thousand":
-                copy_text[count] = copy_text[count] + self.parse_big_number(word)
-                del copy_text[count+1]
+                copy_text[count] = self.parse_big_number(word)
 
             #elif word in self.countries_codes["Code"]:
              #   index = self.countries_codes["Code"].index(word)
