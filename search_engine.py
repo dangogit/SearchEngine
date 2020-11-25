@@ -81,7 +81,7 @@ def parse_and_index_tweet_list(tweet_list, fmt, p, indexer, filename, parsed_fil
     print("[" + str(datetime.now()) + "] " + "Finished Parsing and Indexing documents in file: " + filename)
     d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
     d2_ts = time.mktime(d2.timetuple())
-    print(str(float(d2_ts - d1_ts)) + " seconds")
+    print(str(float(d2_ts - d1_ts) / 60) + " minutes")
 
     return idx
 

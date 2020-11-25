@@ -149,7 +149,7 @@ class Indexer:
 
     def update_posting_file(self):
         #'term_index' , 'doc#', 'freq', 'location_list', 'n', 'unique num of words'
-        print("updating posting files:")
+        print("[" + str(datetime.now()) + "] " + "updating inverted files:")
         fmt = '%Y-%m-%d %H:%M:%S'
         d1 = datetime.strptime(datetime.now().strftime(fmt), fmt)
         d1_ts = time.mktime(d1.timetuple())
@@ -175,6 +175,13 @@ class Indexer:
                     self.inverted_idx_dicts_list[i].clear()
             except:
                 traceback.print_exc()
+        d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
+        d2_ts = time.mktime(d2.timetuple())
+        print(str(float(d2_ts - d1_ts) / 60) + " minutes")
+
+        print("[" + str(datetime.now()) + "] " + "updating posting files:")
+        d1 = datetime.strptime(datetime.now().strftime(fmt), fmt)
+        d1_ts = time.mktime(d1.timetuple())
 
 
         for i in range(len(self.posting_dicts_list)):
