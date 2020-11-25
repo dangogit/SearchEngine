@@ -119,10 +119,17 @@ class Parse:
         copy_text = [w for w in copy_text if w[0] != '\/' and w.lower() not in self.stop_words.keys()]
         count = 0
         for word in copy_text:
-            #if word[0] == '#':
-             #   copy_text[count] = self.parse_hashtag(word)
+            if word[0] == '@':
+                count += 1
+                continue
 
-            if '%' in word or 'percent' in word.lower():
+            elif 'http' in word or 'www' in word:
+                copy_text[count] = self.parse_URL(word)
+
+            elif word[0] == '#':
+                copy_text[count] = self.parse_hashtag(word)
+
+            elif '%' in word or 'percent' in word.lower():
                 copy_text[count] = self.parse_precentage(word)
 
             elif word[0].isnumeric(): # if found number check next word
@@ -130,6 +137,7 @@ class Parse:
                 try: #check if its only number
                     num = float(word)
                 except ValueError:
+                    del copy_text[count]
                     continue
                 if num >= 1000:
                     copy_text[count] = self.parse_clean_number(num)
@@ -137,16 +145,17 @@ class Parse:
                 elif count < len(copy_text) - 1:
                     next_word = copy_text[count+1]
                     if next_word == "Thousand" or next_word == "Million" or next_word == "Billion" or next_word == "million" or next_word == "billion" or next_word == "thousand":
-                        copy_text[count + 1] = self.parse_big_number(next_word)
+                        copy_text[count] = self.parse_big_number(next_word)
 
             elif word == "Thousand" or word == "Million" or word == "Billion" or word == "million" or word == "billion" or word == "thousand":
-                copy_text[count] = self.parse_big_number(word)
+                copy_text[count] = copy_text[count] + self.parse_big_number(word)
+                del copy_text[count+1]
 
             #elif word in self.countries_codes["Code"]:
              #   index = self.countries_codes["Code"].index(word)
               #  copy_text[count] = self.countries_codes["Name"][index].upper()
 
-            elif word.isalpha() and '@' not in word and '#' not in word and '/' not in word and '.' not in word and ':' not in word and ',' not in word:
+            elif word.isalpha() and '@' not in word and '#' not in word and '/' not in word:
                 if word.islower():
                     if word not in self.word_set.keys():
                         self.word_set[word] = None
@@ -159,6 +168,65 @@ class Parse:
             count += 1
 
         return copy_text
+
+    def check_numeric(self, text):
+        for charcter in text:
+            if charcter.isdigit():
+                return True
+        return False
+
+    def parse_hastag(self, text):
+        tmp_word = ""
+        word_list = [text]
+        contains_dash = False
+        letter_index = 0
+        if ("_" in text):
+            contains_dash = True
+        text = text.replace("_", " ")
+        contain_numeric = self.check_numeric(text)
+
+        text = text.replace("#", "")
+        if text.isupper() == True:  # in case all capital
+            new_text = text.replace("#", "")
+            word_list.append(new_text.lower())
+            return word_list
+        elif contain_numeric == False and contains_dash == True:  # not numeric and no dashes
+            list = text.split()
+            word_list = word_list + list
+        else:
+            # else if all word connected and start with capital letter (besides the first one)
+
+            for i in range(len(text)):
+                if text[i].isnumeric() == True:
+                    word_list.append(tmp_word.lower())
+                    letter_index = i
+                    tmp_word = text[i]
+                    break
+
+                elif (text[i].isupper() and i != 0):
+                    word_list.append(tmp_word.lower())
+                    tmp_word = text[i]
+                else:
+                    tmp_word = tmp_word + text[i]
+
+            for k in range(letter_index + 1, len(text)):
+                if (text[k].isnumeric() == True):
+                    tmp_word = tmp_word + text[k]
+            word_list.append(tmp_word.lower())
+        return ' '.join(word_list)
+
+    def parse_URL(self, url):
+        tmp_word = ""
+        word_list = [url]
+        # or replace on all : / -  and then split and join
+        url = url.replace(":", "").replace("//", "/")
+        for i in range(len(url)):
+            if (url[i] == ":" or url[i] == "." or url[i] == "/" or url[i] == "-" or url[i] == "_"):
+                word_list.append(tmp_word)
+                tmp_word = ""
+            else:
+                tmp_word = tmp_word + url[i]
+        return ' '.join(word_list)
 
     def parse_all_text2(self, text, idx):
         if text is None:
@@ -220,7 +288,7 @@ class Parse:
                 copy_text[count - 1] = self.parse_clean_number(temp_num)
         return copy_text
 
-    def parse_URL(self, URL):
+    def parse_URL2(self, URL):
         parsed = urlparse(URL, allow_fragments=True)
         parsed_url = []
         parsed_url.append(parsed.scheme)
@@ -242,7 +310,7 @@ class Parse:
         string = ' '.join(parsed_url)
         return string
 
-    def parse_hashtag(self, text):
+    def parse_hashtag2(self, text):
         idx = 0
         final_word = ''
         list_to_add = []
@@ -364,7 +432,7 @@ class Parse:
         if text is None:
             return text
         for word in self.tweets_with_terms_to_fix[idx]:
-            if word.lower() in self.word_set:
+            if word.lower() in self.word_set.keys():
                 text = text.replace(word, word.lower())
             else:
                 text = text.replace(word, word.upper())

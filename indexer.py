@@ -70,11 +70,10 @@ class Indexer:
 
             self.curr += 1
 
-            if self.curr==10000000:
+            if self.curr==1000000:
                 #sort the dictionaries, update them and write them to json file
                 self.update_posting_file()
                 self.curr = 0
-                self.postingDict.clear()
 
     def term_to_posting_dict(self, term, doc_idx, freq_in_doc, document, number_of_docs, count_unique):
         key = term + " " + str(doc_idx)
@@ -272,4 +271,4 @@ class Indexer:
         #df3.to_json("posting_file.json", orient='records', lines=True)
         d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
         d2_ts = time.mktime(d2.timetuple())
-        print(str(int(d2_ts-d1_ts)) + " seconds")
+        print(str(float(d2_ts-d1_ts)/60) + " minutes")
