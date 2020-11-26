@@ -8,12 +8,13 @@ from configuration import ConfigClass
 from parser_module import Parse
 from indexer import Indexer
 from searcher import Searcher
+from stemmer import Stemmer
 import pandas as pd
 import utils
 
 from datetime import datetime
 
-def run_engine():
+def run_engine(corpus_path = None, output_path = None, stemming=None):
     """
 
     :return:
@@ -22,6 +23,8 @@ def run_engine():
     config = ConfigClass()
     r = ReadFile(corpus_path=config.get__corpusPath())
     p = Parse()
+    if stemming:
+        p.steamer = Stemmer()
     indexer = Indexer(config)
     fmt = '%Y-%m-%d %H:%M:%S'
     parsed_files_names = []
@@ -41,6 +44,7 @@ def run_engine():
                         tweet_list = r.read_file(new_path)  #holds list of the tweets as text
                         idx = parse_and_index_tweet_list(tweet_list, fmt, p, indexer, filename, parsed_files_names, idx)
 
+    #indexer.merge_and_sort_all_posting_files()
 
     # testing:
     d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
@@ -61,15 +65,15 @@ def parse_and_index_tweet_list(tweet_list, fmt, p, indexer, filename, parsed_fil
 
     for document in tweet_list:
         # parse the document
-        #before.append(document[2])
         p.curr_idx = idx
         parsed_document = p.parse_doc(document)
         parsed_tweets[idx]=parsed_document
         #add the doucment to indexer here
-        #indexer.add_new_doc(parsed_document, idx)
+        indexer.add_new_doc(parsed_document, idx)
         idx += 1
 
     new_filename = filename.replace(".snappy.parquet", ".json")
+
     with open(new_filename, 'w', encoding='utf-8') as parsed_file:
         json.dump(parsed_tweets, parsed_file)
         parsed_files_names.append(new_filename)
@@ -78,7 +82,7 @@ def parse_and_index_tweet_list(tweet_list, fmt, p, indexer, filename, parsed_fil
     print("[" + str(datetime.now()) + "] " + "Finished Parsing and Indexing documents in file: " + filename)
     d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
     d2_ts = time.mktime(d2.timetuple())
-    print(str(float(d2_ts - d1_ts)) + " seconds")
+    print(str(float(d2_ts - d1_ts) / 60) + " minutes")
 
     return idx
 
@@ -116,7 +120,10 @@ def main(corpus_path, output_path, stemming, queries, num_docs_to_retrieve):
     queries- צריך לתמוך בשתי אפשרויות, קובץ של שאילתות בו כל שורה מהווה שאילתא (יסופק לכם קובץ לדוגמא) או רשימה (list) של שאילתות כך שכל איבר ברשימה יהווה שאילתא.
     num_docs_to_retrieve - מספר מסמכים להחזרה עבור כל שאילתא.
     '''
-    return
+    run_engine(corpus_path, output_path, stemming)
+    inverted_index = load_index()
+    for doc_tuple in search_and_rank_query(queries, inverted_index, num_docs_to_retrieve):
+        print('tweet id: {}, score (unique common words with query): {}'.format(doc_tuple[0], doc_tuple[1]))
 
 
 def load_index():

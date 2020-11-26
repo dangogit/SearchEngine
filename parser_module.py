@@ -26,6 +26,7 @@ class Parse:
         self.suspucious_words_for_entites = {}  # dictionary of suspicious words for entites, key is the term and value is the nubmer of apperances
         self.word_set = {}
         self.tweets_with_terms_to_fix = {}
+        self.steamer = None
       #  self.countries_codes = pd.read_csv("countries_codes").to_dict(orient='list')
         #self.nlp = spacy.load("en_core_web_sm")
         self.curr_idx = -1
@@ -53,12 +54,8 @@ class Parse:
         tweet_id = doc_as_list[0]
         tweet_date = doc_as_list[1]
         full_text = doc_as_list[2]
-        terms_list = self.parse_all_text(
-            full_text, self.curr_idx)  # parse text with our functions, need to parse this one or retweet text?
-        try:
-            full_text = ' '.join(terms_list)
-        except:
-            print("a")
+        terms_list = self.parse_all_text(full_text, self.curr_idx)
+        full_text = ' '.join(terms_list)
         url = doc_as_list[3]
         #url = self.parse_URL(url)
         #indices = doc_as_list[4]
@@ -67,7 +64,7 @@ class Parse:
          #   retweet_text, self.curr_idx)
         #retweet_url = doc_as_list[6]
         #retweet_url = self.parse_URL(url)
-        retweet_indices = doc_as_list[7]
+        #retweet_indices = doc_as_list[7]
         #quote_text = doc_as_list[8]
         #quote_url = doc_as_list[9]
 
@@ -76,6 +73,8 @@ class Parse:
         doc_length = len(terms_list)  # after text operations.
 
         for term in terms_list:
+            if self.steamer is not None and term.isalpha() and '@' not in term and '#' not in term and 'http' not in term:
+                term = self.steamer.stem_term(term)
             term = term.lower()
             if term not in term_dict.keys():
                 term_dict[term] = 1
@@ -95,14 +94,14 @@ class Parse:
             return text
         text = text.encode('ascii', 'replace').decode()
         text = text.replace("/n", "")
-        text = text.translate(self.asci_code_to_remove)
+        text = text.translate(self.asci_code_to_remove) # Removing: - | , | . | : | ! | " | & | ( | ) | * | + | ; | > | < | ?
         self.parse_entites(text)
         copy_text = text.split()
-        # 35 <= ord(w[0]) <= 122
         copy_text = [w for w in copy_text if w[0] != '\/' and w.lower() not in self.stop_words.keys()]
         count = 0
         for word in copy_text:
             if word == '':
+                count+=1
                 continue
 
             elif word[0] == '@':
@@ -116,11 +115,10 @@ class Parse:
                 copy_text[count] = self.parse_hashtag(word)
 
             elif word[0].isnumeric(): # if found number check next word
-                word = word.replace(",", "") # 1,000 to 1000
                 try: #check if its only number
                     num = float(word)
                 except ValueError:
-                    copy_text[count] = ''
+                    count+=1
                     continue
                 if num >= 1000:
                     copy_text[count] = self.parse_clean_number(num)
@@ -139,7 +137,7 @@ class Parse:
                         try:  # check if its only number
                             next_num = float(next_word)
                         except ValueError:
-                            copy_text[count] = ''
+                            count += 1
                             continue
                         copy_text[count] = str(num + next_num)
                         copy_text[count + 1] = ''
@@ -152,6 +150,7 @@ class Parse:
               #  copy_text[count] = self.countries_codes["Name"][index].upper()
 
             elif word.isalpha() and '@' not in word and '#' not in word and '/' not in word:
+
                 if word.islower():
                     if word not in self.word_set.keys():
                         self.word_set[word] = None
