@@ -177,6 +177,9 @@ class Indexer:
         return new_tuple
 
     def merge_inverted_idx_dicts(self, inverted_idx_from_file, inverted_idx_dict):
+        if len(inverted_idx_from_file.keys()) == 0:
+            return inverted_idx_dict
+
         for term in inverted_idx_dict.keys():
             if term in inverted_idx_from_file.keys():
                 number_of_docs = inverted_idx_from_file[term][0] + inverted_idx_dict[term][0]
