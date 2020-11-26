@@ -283,25 +283,9 @@ class Indexer:
 
     def update_posting_file(self, index):
         print("[" + str(datetime.now()) + "] " + "updating posting file of :"+ str(index))
-
-        # for i in range(len(self.posting_dicts_list)):
-        #   self.posting_dicts_list[i] = self.sort_dictionarys(self.posting_dicts_list[i])
-
         try:
-            with open("Posting_files/" +self.posting_files_list[index], 'r', encoding='utf-8') as posting_file:
-                posting_dict_from_file = json.load(posting_file)
-        except:
-            posting_dict_from_file = {}
-
-        posting_dict_to_file = {**posting_dict_from_file, **self.posting_dicts_list[index]}
-        #  posting_dict_to_file = self.sort_dictionarys(posting_dict_to_file)
-        # to json:
-        try:
-
-            with open("Posting_files/" +self.posting_files_list[index], 'w', encoding='utf-8') as posting_file:
-                json.dump(posting_dict_to_file, posting_file)
-                posting_dict_to_file.clear()
-                posting_dict_from_file.clear()
+            with open("Posting_files/" +self.posting_files_list[index], 'a', encoding='utf-8') as posting_file:
+                json.dump(self.posting_dicts_list[index], posting_file)
                 self.posting_dicts_list[index].clear()
         except:
             traceback.print_exc()

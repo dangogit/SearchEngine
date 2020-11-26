@@ -1,3 +1,4 @@
+import os
 import re
 
 import nltk
@@ -35,7 +36,9 @@ if __name__ == '__main__':
     #k = int(input("Please enter number of docs to retrieve: "))
     #corpus_path="r'C:\Users\Daniel\Desktop\BGU\שנה ג\סמסטר ה\אחזור מידע\עבודות\FullData'"
     #output_path="?"
-    search_engine.main()
+  search_engine.main()
+
+  #  print(re.search(r'(.)\1\1', word) is not None)
     #newReader= ReadFile(r"C:\Users\dorle\Data")
     #newReader.Read_Files()
     #testing:
