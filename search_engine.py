@@ -19,7 +19,9 @@ def run_engine(corpus_path = None, output_path = None, stemming=None):
 
     :return:
     """
-
+    os.mkdir("Parsed_files")
+    os.mkdir("Inverted_files")
+    os.mkdir("Posting_files")
     config = ConfigClass()
     r = ReadFile(corpus_path=config.get__corpusPath())
     p = Parse()
@@ -71,7 +73,7 @@ def parse_and_index_tweet_list(tweet_list, fmt, p, indexer, filename, parsed_fil
         indexer.add_new_doc(parsed_document, idx)
         idx += 1
 
-    new_filename = filename.replace(".snappy.parquet", ".json")
+    new_filename = "Parsed_files/" + filename.replace(".snappy.parquet", ".json")
 
     with open(new_filename, 'w', encoding='utf-8') as parsed_file:
         json.dump(parsed_tweets, parsed_file)

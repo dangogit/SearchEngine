@@ -171,8 +171,13 @@ class Parse:
               #  copy_text[count] = self.countries_codes["Name"][index].upper()
 
             elif word.isalpha() and '@' not in word and '#' not in word and '/' not in word:
+                if re.search(r'(.)\1\1', word) is not None:
+                    copy_text[count] = ''
 
-                if word.islower():
+                elif word.lower() == 'rt':
+                    copy_text[count] = ''
+
+                elif word.islower():
                     if word not in self.word_set.keys():
                         self.word_set[word] = None
 
