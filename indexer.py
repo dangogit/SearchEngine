@@ -116,9 +116,9 @@ class Indexer:
         self.inverted_idx_dicts_list[index], self.posting_dicts_list[index] = self.update_inverted_idx_and_posting_dict(
             term, inverted_idx, posting_dict, freq_in_doc, doc_idx, document, unique_terms_in_doc)
 
-        if sys.getsizeof(self.inverted_idx_dicts_list[index]) > 8000000:
+        if sys.getsizeof(self.inverted_idx_dicts_list[index]) > 2000000:
             self.update_inverted_file(index)
-        if sys.getsizeof(self.posting_dicts_list[index]) > 8000000:
+        if sys.getsizeof(self.posting_dicts_list[index]) > 2000000:
             self.update_posting_file(index)
 
     def update_inverted_idx_and_posting_dict(self, term, inverted_idx, posting_dict, freq_in_doc, doc_idx, document,

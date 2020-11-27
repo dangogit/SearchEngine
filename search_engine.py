@@ -11,6 +11,7 @@ from searcher import Searcher
 from stemmer import Stemmer
 import pandas as pd
 import utils
+import sys
 
 from datetime import datetime
 
@@ -22,6 +23,8 @@ def run_engine(corpus_path = None, output_path = None, stemming=None):
     os.mkdir("Parsed_files")
     os.mkdir("Inverted_files")
     os.mkdir("Posting_files")
+
+
     config = ConfigClass()
     r = ReadFile(corpus_path=config.get__corpusPath())
     p = Parse()
@@ -60,7 +63,7 @@ def run_engine(corpus_path = None, output_path = None, stemming=None):
 
 def parse_and_index_tweet_list(tweet_list, fmt, p, indexer, filename, parsed_files_names, idx):
     parsed_tweets = {}
-    print("[" + str(datetime.now()) + "] " + "Parsing and Indexing documents in file: "+ filename)
+    print("[" + str(datetime.now()) + "] " + "Parsing and Indexing documents in file: "+ filename +" "+ str(sys.getsizeof(tweet_list)/1000000) + "mb")
     d1 = datetime.strptime(datetime.now().strftime(fmt), fmt)
     d1_ts = time.mktime(d1.timetuple())
 
@@ -73,11 +76,15 @@ def parse_and_index_tweet_list(tweet_list, fmt, p, indexer, filename, parsed_fil
         indexer.add_new_doc(parsed_document, idx)
         idx += 1
 
-    new_filename = "Parsed_files/" + filename.replace(".snappy.parquet", ".json")
+    new_filename = filename.replace(".snappy.parquet", ".json")
 
-    with open(new_filename, 'w', encoding='utf-8') as parsed_file:
+    with open("Parsed_files/" +new_filename, 'w', encoding='utf-8') as parsed_file:
         json.dump(parsed_tweets, parsed_file)
         parsed_files_names.append(new_filename)
+
+    with open("Parsed_files/words_to_fix_" +new_filename, 'w', encoding='utf-8') as fix_file:
+        json.dump(p.tweets_with_terms_to_fix, fix_file)
+        p.tweets_with_terms_to_fix.clear()
 
 
     print("[" + str(datetime.now()) + "] " + "Finished Parsing and Indexing documents in file: " + filename)
@@ -94,8 +101,11 @@ def fix_big_small_letters_in_documents(fmt, p, parsed_files_names):
     parsed_tweets_dict = {}
     for filename in parsed_files_names:
         try:
-            with open(filename, 'r', encoding='utf-8') as parsed_file:
+            with open("Parsed_files/" +filename, 'r', encoding='utf-8') as parsed_file:
                 parsed_tweets_dict = json.load(parsed_file)
+
+            with open("Parsed_files/words_to_fix_" +filename, 'r', encoding='utf-8') as fix_file:
+                p.tweets_with_terms_to_fix = json.load(fix_file)
         except:
             traceback.print_exc()
         for index in parsed_tweets_dict.keys():
