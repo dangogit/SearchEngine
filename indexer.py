@@ -89,6 +89,7 @@ class Indexer:
         """
         document_dictionary = document[4] #term_dict
         unique_terms_in_doc = self.count_unique(document_dictionary)
+        max_tf = max(document_dictionary, key=lambda key: document_dictionary[key])
         # Go over each term in the doc
         for term in document_dictionary.keys():
             try:
@@ -97,7 +98,7 @@ class Indexer:
                 # freq of term in all corpus until now
                 freq_in_doc = document_dictionary[term]
 
-                self.insert_term_to_inv_idx_and_post_dict(term, freq_in_doc, doc_idx, unique_terms_in_doc, document)
+                self.insert_term_to_inv_idx_and_post_dict(term, freq_in_doc, doc_idx, unique_terms_in_doc, max_tf, document)
 
             except:
                 print('problem with the following key {}'.format(term))
@@ -113,7 +114,7 @@ class Indexer:
                 self.curr = 0
 
     def insert_term_to_inv_idx_and_post_dict(self, term, freq_in_doc, doc_idx,
-                                             unique_terms_in_doc, document):
+                                             unique_terms_in_doc, max_tf, document):
         index = self.letters_dict[term[0]]
 
         if term in self.inverted_idx_dicts_list[index].keys():
@@ -127,9 +128,9 @@ class Indexer:
             docs_list = []
             last_doc_idx = doc_idx
 
-        docs_list.append((doc_idx, freq_in_doc))
+        docs_list.append([doc_idx, freq_in_doc, max_tf])
 
-        self.inverted_idx_dicts_list[index][term] = (number_of_docs, freq_in_corpus, self.differnce_method(docs_list, last_doc_idx), doc_idx)
+        self.inverted_idx_dicts_list[index][term] = [number_of_docs, freq_in_corpus, self.differnce_method(docs_list, last_doc_idx), doc_idx]
         key = term + " " + str(doc_idx)
         term_indices = [idx for idx, word in enumerate(document[2].split(), 1) if word == term]
         self.posting_dicts_list[index][key] = [doc_idx, freq_in_doc, term_indices, document[5], unique_terms_in_doc]
@@ -141,33 +142,13 @@ class Indexer:
                 self.update_inverted_file(index)
                 self.inverted_idx_count_for_update[index] = 0
 
-    def update_inverted_idx_and_posting_dict(self, term, inverted_idx, posting_dict, freq_in_doc, doc_idx, document,
-                                             unique_terms_in_doc):
-        if term in inverted_idx.keys():
-            number_of_docs = inverted_idx[term][0] + 1
-            freq_in_corpus = inverted_idx[term][1] + freq_in_doc
-            docs_list = inverted_idx[term][2]
-            last_doc_idx = inverted_idx[term][3]
-        else:
-            number_of_docs = 1
-            freq_in_corpus = freq_in_doc
-            docs_list = []
-            last_doc_idx = doc_idx
-
-        docs_list.append((doc_idx, freq_in_doc))
-
-        inverted_idx[term] = (number_of_docs, freq_in_corpus, self.differnce_method(docs_list, last_doc_idx), doc_idx)
-        key = term + " " + str(doc_idx)
-        posting_dict[key] = [doc_idx, freq_in_doc, self.index_term_in_text(term, document[2]), document[5], unique_terms_in_doc]
-
-        return inverted_idx, posting_dict
 
     # list of tuples(doc_num, number of apperances in doc)
     def differnce_method(self, list, last_doc_index):
         i = len(list) - 1
         if i != 0:
             new_value = list[i][0] - last_doc_index
-            list[i] = (new_value, list[i][1])
+            list[i] = [new_value, list[i][1], list[i][2]]
         return list
 
     def index_term_in_text(self, term, text):
