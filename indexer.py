@@ -87,9 +87,12 @@ class Indexer:
         :param document: a document need to be indexed.
         :return: -
         """
+
         document_dictionary = document[4] #term_dict
+        if len(document_dictionary) == 0:
+            return
         unique_terms_in_doc = self.count_unique(document_dictionary)
-        max_tf = max(document_dictionary, key=lambda key: document_dictionary[key])
+        max_tf = max(document_dictionary.values())
         # Go over each term in the doc
         for term in document_dictionary.keys():
             try:
@@ -119,27 +122,28 @@ class Indexer:
 
         if term in self.inverted_idx_dicts_list[index].keys():
             number_of_docs = self.inverted_idx_dicts_list[index][term][0] + 1
-            freq_in_corpus = self.inverted_idx_dicts_list[index][term][1] + freq_in_doc
-            docs_list = self.inverted_idx_dicts_list[index][term][2]
-            last_doc_idx = self.inverted_idx_dicts_list[index][term][3]
+            #freq_in_corpus = self.inverted_idx_dicts_list[index][term][1] + freq_in_doc
+            docs_list = self.inverted_idx_dicts_list[index][term][1]
+            last_doc_idx = self.inverted_idx_dicts_list[index][term][2]
         else:
             number_of_docs = 1
-            freq_in_corpus = freq_in_doc
+            #freq_in_corpus = freq_in_doc
             docs_list = []
             last_doc_idx = doc_idx
 
-        docs_list.append([doc_idx, freq_in_doc, max_tf])
+        tf = "{:.2f}".format(float(freq_in_doc)/float(document[5]))
+        docs_list.append([doc_idx, tf])
 
-        self.inverted_idx_dicts_list[index][term] = [number_of_docs, freq_in_corpus, self.differnce_method(docs_list, last_doc_idx), doc_idx]
+        self.inverted_idx_dicts_list[index][term] = [number_of_docs, self.differnce_method(docs_list, last_doc_idx), doc_idx]
         key = term + " " + str(doc_idx)
         term_indices = [idx for idx, word in enumerate(document[2].split(), 1) if word == term]
-        self.posting_dicts_list[index][key] = [doc_idx, freq_in_doc, term_indices, document[5], unique_terms_in_doc]
+        self.posting_dicts_list[index][key] = [doc_idx, freq_in_doc, term_indices, document[5], unique_terms_in_doc, max_tf]
 
         if sys.getsizeof(self.posting_dicts_list[index]) > 4000000:
             self.inverted_idx_count_for_update[index] += 1
             self.update_posting_file(index)
             if self.inverted_idx_count_for_update[index] == 3:
-                self.update_inverted_file(index)
+                self.update_inv_file(index)
                 self.inverted_idx_count_for_update[index] = 0
 
 
@@ -148,7 +152,7 @@ class Indexer:
         i = len(list) - 1
         if i != 0:
             new_value = list[i][0] - last_doc_index
-            list[i] = [new_value, list[i][1], list[i][2]]
+            list[i] = [new_value, list[i][1]]
         return list
 
     def index_term_in_text(self, term, text):
@@ -177,26 +181,27 @@ class Indexer:
         new_tuple = (res[0], new_value)
         return new_tuple
 
+
     def merge_inverted_idx_dicts(self, inverted_idx_from_file, inverted_idx_dict):
         if len(inverted_idx_from_file.keys()) == 0:
             return inverted_idx_dict
-
-        for term in inverted_idx_dict.keys():
+        while len(inverted_idx_dict.keys()) > 0:
+            term, values_of_term = inverted_idx_dict.popitem()
             if term in inverted_idx_from_file.keys():
-                number_of_docs = inverted_idx_from_file[term][0] + inverted_idx_dict[term][0]
-                freq_in_corpus = inverted_idx_from_file[term][1] + inverted_idx_dict[term][1]
-                docs_list_from_file = inverted_idx_from_file[term][2]
-                docs_list_from_local = inverted_idx_dict[term][2]
-                last_doc_idx_from_file = inverted_idx_from_file[term][3]
+                number_of_docs = inverted_idx_from_file[term][0] + values_of_term[0]
+                #freq_in_corpus = inverted_idx_from_file[term][1] + inverted_idx_dict[term][1]
+                docs_list_from_file = inverted_idx_from_file[term][1]
+                docs_list_from_local = values_of_term[1]
+                last_doc_idx_from_file = inverted_idx_from_file[term][2]
                 docs_list_from_file.append(docs_list_from_local[0])
                 docs_list_from_file = self.differnce_method(docs_list_from_file, last_doc_idx_from_file)
                 docs_list_from_file.append(docs_list_from_local[1:])
-                last_doc_idx_from_local = inverted_idx_dict[term][3]
+                last_doc_idx_from_local = values_of_term[2]
 
-                inverted_idx_from_file[term] = (
-                    number_of_docs, freq_in_corpus, docs_list_from_file, last_doc_idx_from_local)
+                inverted_idx_from_file[term] = [
+                    number_of_docs, docs_list_from_file, last_doc_idx_from_local]
             else:
-                inverted_idx_from_file[term] = inverted_idx_dict[term]
+                inverted_idx_from_file[term] = values_of_term
 
         return inverted_idx_from_file
 
@@ -289,7 +294,68 @@ class Indexer:
         print("[" + str(datetime.now()) + "] " + "updating posting file of :"+ str(index))
         try:
             with open("Posting_files/" +self.posting_files_list[index], 'a', encoding='utf-8') as posting_file:
-                json.dump(self.posting_dicts_list[index], posting_file)
+                jsonstr = json.dumps(self.posting_dicts_list[index])
+                posting_file.write((jsonstr + "\n"))
                 self.posting_dicts_list[index].clear()
         except:
             traceback.print_exc()
+
+    def update_inv_file(self, index):
+        print("[" + str(datetime.now()) + "] " + "updating inverted file of :"+ str(index))
+        try:
+            with open("Inverted_files/" +self.inverted_idx_files_list[index], 'a', encoding='utf-8') as inverted_file:
+                jsonstr = json.dumps(self.inverted_idx_dicts_list[index])
+                inverted_file.write((jsonstr + "\n"))
+                self.inverted_idx_dicts_list[index].clear()
+        except:
+            traceback.print_exc()
+
+
+    def fix_inverted_files(self, index):
+        print("[" + str(datetime.now()) + "] " + "fixing inverted files of :" + str(index))
+        inverted_dicts_from_file = []
+        try:
+            with open("Inverted_files/" +self.inverted_idx_files_list[index], 'r', encoding='utf-8') as inverted_file:
+                for line in inverted_file.readlines():
+                    inverted_dicts_from_file.append(json.loads(line))
+        except:
+            traceback.print_exc()
+
+        print("[" + str(datetime.now()) + "] " + "merging...")
+        for i in range(1,len(inverted_dicts_from_file)):
+            base_dict = inverted_dicts_from_file[0]
+            inverted_dicts_from_file[0] = self.merge_inverted_idx_dicts(base_dict, inverted_dicts_from_file[i])
+
+        # to json:
+        try:
+            with open("Inverted_files/" +self.inverted_idx_files_list[index], 'w', encoding='utf-8') as posting_file:
+                json.dump(inverted_dicts_from_file[0], posting_file)
+        except:
+            traceback.print_exc()
+
+        print("[" + str(datetime.now()) + "] " + "finished fixing inverted file of :" + str(index))
+
+
+    def fix_posting_files(self, index):
+        print("[" + str(datetime.now()) + "] " + "fixing posting files of :" + str(index))
+        posting_dict_from_file = []
+        try:
+            with open("Posting_files/" +self.posting_files_list[index], 'r', encoding='utf-8') as posting_file:
+                for line in posting_file.readlines():
+                    posting_dict_from_file.append(json.loads(line))
+        except:
+            traceback.print_exc()
+        print("[" + str(datetime.now()) + "] " + "sorting...")
+        posting_dict_from_file = self.sort_dictionarys(posting_dict_from_file)
+
+        # to json:
+        try:
+            with open("Posting_files/" +self.posting_files_list[index], 'w', encoding='utf-8') as posting_file:
+                json.dump(posting_dict_from_file, posting_file)
+        except:
+            traceback.print_exc()
+
+        print("[" + str(datetime.now()) + "] " + "finished fixing posting file of :" + str(index))
+
+
+

@@ -7,8 +7,8 @@ class Ranker:
 
 
     @staticmethod
-    def rank_relevant_doc(tf_idf_dict,relevent_doc_id_list,query_as_list):
-        final_doc_dict={} #list of tuples: (doc_id,rank with this query)
+    def rank_relevant_doc(final_dict,doc_id_list,query_as_list):
+        final_docs_ranking={} #list of tuples: (doc_id,rank with this query)
         #need to run on all documents recived here, give them a score, and sort them
         """
         This function provides rank for each relevant document and sorts them by their scores.
@@ -16,21 +16,26 @@ class Ranker:
         @:param:param relevant_doc: dictionary of documents that contains at least one term from the query.
         @:return: sorted list of documents by score
         """
-        #need to implment cosine simularity using tf-idf
-        for doc_id in relevent_doc_id_list:
+        #cosine simularity using tf-idf
+        query_size = len(query_as_list)
+        for doc_id in doc_id_list:
             mone=0
-            mechane=0
+            mechane1=0
+            mechane2=0
             for term in query_as_list:
+
                 num_of_apprences_in_query=sum(term in s for s in query_as_list)
-                list_of_appernces_in_corpus=tf_idf_dict[term]
+                list_of_appernces_in_corpus=final_dict[term]
                 for tmp_list in list_of_appernces_in_corpus: #run on all list of the term
-                    if tmp_list[0]==doc_id: #if this is the document we are looking at right now
-                        Wij =tmp_list[1]
-                        mone += num_of_apprences_in_query*Wij
-                        mechane +=(num_of_apprences_in_query**2)*(Wij**2)
-            mechane=math.sqrt(mechane)
-            final_doc_dict[doc_id]=mone/mechane
-        return sorted(final_doc_dict.items(), key=lambda item: item[1], reverse=True)
+                    if tmp_list[2]==doc_id: #if this is the document we are looking at right now
+                        Wij =tmp_list[0]*tmp_list[1] # tf*idf
+                        Wiq=num_of_apprences_in_query/query_size
+                        mone += Wij* Wiq
+                        mechane1 += Wij**2
+                        mechane2+= Wiq**2
+            mechane=math.sqrt(mechane1*mechane2)
+            final_docs_ranking[doc_id]=mone/mechane
+        return sorted(final_docs_ranking.items(), key=lambda item: item[1], reverse=True)
 
     @staticmethod
     def retrieve_top_k(sorted_relevant_doc, k=1):

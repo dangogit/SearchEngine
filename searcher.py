@@ -10,6 +10,7 @@ from nltk.corpus import wordnet
 import numpy as np
 import nltk
 
+
 class Searcher:
 
     def __init__(self):
@@ -18,8 +19,7 @@ class Searcher:
         """
         self.parser = Parse()
         self.ranker = Ranker()
-        nltk.download()
-        #self.inverted_index = inverted_index
+        # self.inverted_index = inverted_index
         self.posting_files_list = ["posting_file_a.json",
                                    "posting_file_b.json",
                                    "posting_file_c.json",
@@ -79,97 +79,126 @@ class Searcher:
                                         "inverted_idx_hashtags.json"]
         self.stop_words = {k.lower(): "" for k in stopwords.words('english')}
 
+    # the big matrix is the base for the functions
 
-
-    #the big matrix is the base for the functions
-
-    def get_similar_words(self,term):
-        synomus=[]
-        for syn in wordnet.synset(term):
-            count=1
-            for l in syn.lemmas():
-                if (l.wup_similarity(term) > 0.8 and count < 3):  # check similitary and add only 2 words
-                    synomus.append(l.name())
-                    count+=1
+    def get_similar_words(self, term):
+        synomus = []
+        try:
+            count = 0
+            for syns in wordnet.synsets(term):
+                for l in syns.lemmas():
+                    if (l.name() != term and count < 2 and l.name not in synomus):
+                        synomus.append(l.name())
+                        count += 1
+                    elif count >= 2:
+                        return synomus
+        except:
+            print("could not find synomus for the word: " + term)
         return synomus
 
+    # return list of list
+    def get_tf_from_inverted_idx(self, term, inverted_index):
+        main_list = []
+        doc_id_list = []
+        letter_dict = self.letters_dict
+        tmp_doc_list = []
+        location_list = inverted_index[term][2]
+        print("location size list is: " + str(len(location_list)))  # location list of the term
+        tmp_add = 0  # recover the location list
+        for tmp_tuple in location_list:
+            # differnce method
+            tmp_add += tmp_tuple[0]
+            # key = term+" "+str(tmp_add)
+            tmp_doc_list.append(int(tmp_add))  # add doc_id to dic id list
+            doc_id_list.append(int(tmp_add))
+            Fij = inverted_index[term][1]  # freq in doc
+            Dj = inverted_index[term][3]  # Dj, doucment length
+            tf = Fij / Dj  # calculate tf by formula
+            tmp_doc_list.append(tf)
+            main_list.append(tmp_doc_list)
+            # tmp
 
-    #return list of list
-    def get_tf_from_posting(self, term,inverted_index):
-        main_list=[]
-        letter_dict=self.letters_dict
-        idx=letter_dict[term[0]]
-        posting_dict_list=self.posting_files_list
-        doc_id_list=[]
-        #find the right posting file according to first letter of the term
-        try:
-            with open("Posting_files/" +posting_dict_list[idx], 'r', encoding='utf-8') as posting_file:
-                posting_dict_from_file = json.load(posting_file)
-                tmp_doc_list=[]
-                location_list=inverted_index[term][2] #location list of the term
-                tmp_add=0 #recover the location list
-                for tmp_tuple in location_list:
-                    #differnce method
-                    key = term+str(tmp_add+tmp_tuple[1])
-                    tmp_add+=tmp_tuple[1]
-                    tmp_doc_list.append(tmp_tuple[0]) #doc_id
-                    doc_id_list.append(tmp_tuple[0])
-                    Fij=posting_dict_from_file[key][1]#freq in doc
-                    Dj=posting_dict_from_file[key][3]#Dj, doucment length
-                    tf = Fij / Dj  # calculate tf by formula
-                    tmp_doc_list.append(tf)
-                    main_list.append(tmp_doc_list)
-                    #tmp
-        except:
-            traceback.print_exc()
+        # here need to sort list and return 2000 biggest dfi doucments?
+        main_list = main_list.sort(key=lambda x: x[1])
+        main_list = main_list[:2000]
+        doc_id_list = sorted(doc_id_list)
+        return main_list, doc_id_list
 
-        return main_list,doc_id_list
+    def revocer_doc_ids(self, doc_id_tf_list):
+        tmp_add = 0
+        for tmp_list in doc_id_tf_list:
+            tmp_add += tmp_list[0]
+            tmp_list[0] = tmp_add
+        return doc_id_tf_list
 
-    def get_right_inverted_index(self,letter):
+    def get_right_inverted_index(self, letter):
         idx = self.letters_dict[letter]
         inverted_index_dict_list = self.inverted_idx_files_list
         # find the right posting file according to first letter of the term
         try:
-            with open("Posting_files/" + inverted_index_dict_list[idx], 'r', encoding='utf-8') as posting_file:
+            with open("Inverted_files/" + inverted_index_dict_list[idx], 'r', encoding='utf-8') as posting_file:
                 inverted_idx_from_file = json.load(posting_file)
         except:
             print("could not find right dictionary in searcher")
 
         return inverted_idx_from_file
 
-
-
-    #N= total amount of document in the corpus
+    # N= total amount of document in the corpus
     def relevant_docs_from_posting(self, query_as_list, total_num_of_docs):
-        #query is list
+        # query is list
         """
         This function loads the posting list and count the amount of relevant documents per term.
         :param query_as_list: query
         :return: dictionary of relevant documents.
         """
-        #posting = utils.load_obj("posting") #should be list of all posting files
         relevant_docs = []
-        #dictionary that will be passed to the ranker in the following form:
+        # dictionary that will be passed to the ranker in the following form:
         # tf_idf_dict={term:[[doc_id,num of appearnces in this doc],...],term:[[]],idf}
-        tf_idf_dict={}
-        query_as_list=self.parser.parse_all_text(' '.join(query_as_list).lower(),0) #
+        tf_idf_dict = {}
+        terms_searched = {}
+        terms_idf = {}
+        similar_terms = []
+        query_as_list = self.parser.parse_all_text(' '.join(query_as_list).lower(), 0)  #
         for term in query_as_list:
-            #query expansion
-            similar_terms=self.get_similar_words(term) #list
-            query_as_list+=similar_terms
+            # query expansion
+            similar_terms += set(self.get_similar_words(term))  # list
+        query_as_list = set(query_as_list + similar_terms)
+        total_id_dict_list = []  # lists that holds all suspuicous id's and then find the common
         for new_term in query_as_list:
             try:
                 inverted_index = self.get_right_inverted_index(new_term[0])
                 if new_term in inverted_index.keys():
-                    term_doc_id_list=inverted_index[new_term][2] #location list, list of (doc_id,freq_in_doc) that the term appears in
-                    if new_term not in tf_idf_dict.keys():
-                        idf = math.log10((total_num_of_docs / inverted_index[new_term][0]))
-                        tf_list,doc_id_list = self.get_tf_from_posting(new_term,inverted_index)
-                        relevant_docs+=doc_id_list #all relevent doc id's in one list
-                        #tf_idf_dict={term:[[doc_id,num of appearnces in doc_id],...],term:[[]],idf}
-                        tf_idf_dict[new_term]=[tf_list,idf]
+                    terms_idf[new_term] = inverted_index[new_term][0]
+                    # recover doc_id
+                    # inverted_index[1]=[[doc id,tf],[doc_id,tf]...]
+                    docs_list = self.revocer_doc_ids(inverted_index[new_term][2])  # fix difference method
+                    # now dictionary
+                    # sort by tf
+                    sorted_docs_list = sorted(docs_list, key=lambda x: x[1], reverse=True)
+                    # get 2000 best results
+                    best_2000_docs = sorted_docs_list[:2000]
+                    terms_searched[new_term] = dict(best_2000_docs)
+                    # get seperate doc_id list
+                    # doc_id_list = [item[0] for item in inverted_index[new_term][1]]
+                    # [[dict_1,tf1],[dict2,tf2]...]
+                    total_id_dict_list.append([inverted_index[new_term][1], inverted_index[new_term][0]])
             except:
-                    print("could not find term "+ new_term+" in inverted index")
+                traceback.print_exc()
 
-        return tf_idf_dict,relevant_docs
+        doc_id_list = self.get_intersection(terms_searched)
 
+        final_dict = {}
+
+        for term in query_as_list:
+            for doc_id in doc_id_list:
+                tf = terms_searched[term][doc_id]
+                df = terms_idf[term]
+                final_dict[term] = [tf, df, doc_id]
+
+        return final_dict, doc_id_list
+
+    def get_intersection(self, terms_searched):
+        k, res = terms_searched.popitem()  # res is list of doc ids
+        for docs_dict in terms_searched.values():
+            res = res & docs_dict.keys()
+        return res
