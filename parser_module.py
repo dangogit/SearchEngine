@@ -114,7 +114,7 @@ class Parse:
         text = text.encode('ascii', 'replace').decode()
         text = text.replace("/n", "")
         text = text.translate(self.asci_code_to_remove) # Removing: - | , | . | : | ! | " | & | ( | ) | * | + | ; | > | < | ?
-        self.parse_entites(text)
+        #self.parse_entites(text)
         copy_text = text.split()
         copy_text = [w for w in copy_text if w[0] != '\/' and w.lower() not in self.stop_words.keys()]
         count = 0

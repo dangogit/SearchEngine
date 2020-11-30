@@ -43,16 +43,22 @@ def run_engine(corpus_path = None, output_path = None, stemming=None):
 
     total_num_of_docs=0
 
+    tmp_count=1
+
     for subdir, dirs, files in os.walk(r.corpus_path):
         for dir in dirs:
             new_path = r.corpus_path + "\\" + dir
             for subdir, dirs, files in os.walk(new_path):
                 for filename in files:
-                    if ".parquet" in filename:
+                    if ".parquet" in filename and tmp_count <=1:
                         new_path = new_path + "\\" + filename
                         tweet_list = r.read_file(new_path)  #holds list of the tweets as text
                         idx = parse_and_index_tweet_list(tweet_list, fmt, p, indexer, filename, parsed_files_names, idx)
                         total_num_of_docs+=idx
+                        tmp_count+=1
+    for i in range(len(indexer.letters_dict)):
+        indexer.update_inverted_file(i)
+        indexer.update_posting_file(i)
 
     # testing:
     d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
@@ -62,8 +68,8 @@ def run_engine(corpus_path = None, output_path = None, stemming=None):
     fix_big_small_letters_in_documents(fmt, p, parsed_files_names)
 
     print("[" + str(datetime.now()) + "] " + "Saving data...")
-    utils.save_obj(indexer.inverted_idx, "inverted_idx")
-    utils.save_obj(indexer.postingDict, "posting")
+    #utils.save_obj(indexer.inverted_idx, "inverted_idx")
+    #utils.save_obj(indexer.postingDict, "posting")
 
     return total_num_of_docs
 
@@ -149,13 +155,13 @@ def load_index():
     return inverted_index
 
 
-def search_and_rank_query(query, inverted_index, k,total_num_of_docs):
+def search_and_rank_query(query,k,total_num_of_docs):
     p = Parse()
     query_as_list = p.parse_sentence(query)
     #query_as_list=list(dict.fromkeys(query_as_list)) #remove duplicates
-    searcher = Searcher(inverted_index)
-    relevant_docs,tf_if_dict = searcher.relevant_docs_from_posting(query_as_list,total_num_of_docs)
-    ranked_docs = searcher.ranker.rank_relevant_doc(relevant_docs,tf_if_dict,query_as_list)
+    searcher = Searcher()
+    tf_if_dict,relevent_doc_id_list = searcher.relevant_docs_from_posting(query_as_list,total_num_of_docs)
+    ranked_docs = searcher.ranker.rank_relevant_doc(tf_if_dict,relevent_doc_id_list,query_as_list)
     return searcher.ranker.retrieve_top_k(ranked_docs, k)
 
 
@@ -163,6 +169,6 @@ def main():
     total_num_of_docs= run_engine()
     query = input("Please enter a query: ")
     k = int(input("Please enter number of docs to retrieve: "))
-    inverted_index = load_index()
-    for doc_tuple in search_and_rank_query(query, inverted_index, k,total_num_of_docs):
+    #inverted_index = load_index()
+    for doc_tuple in search_and_rank_query(query, k,total_num_of_docs):
         print('tweet id: {}, score (unique common words with query): {}'.format(doc_tuple[0], doc_tuple[1]))

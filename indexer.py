@@ -6,6 +6,7 @@ import json
 import collections
 import sys
 
+
 class Indexer:
 
     def __init__(self, config):
@@ -15,6 +16,8 @@ class Indexer:
                              'v': 21, 'w': 22, 'x': 23, 'y': 24, 'z': 25, '#': 26}
         self.inverted_idx_dicts_list = [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {},
                                         {}, {}, {}, {}, {}, {}, {}]
+        self.inverted_idx_count_for_update = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                        0, 0, 0, 0, 0, 0, 0]
         self.inverted_idx_files_list = ["inverted_idx_a.json",
                                         "inverted_idx_b.json",
                                         "inverted_idx_c.json",
@@ -102,24 +105,41 @@ class Indexer:
 
             self.curr += 1
 
-            if self.curr == 1000000:
+            if self.curr == 5000000:
                 #self.update_inverted_and_posting_file()  # this function updates and sorts the dictionries
                 # self.update_inverted_idx_files(document_dictionary,doc_idx)
+               # for i in range(len(self.inverted_idx_dicts_list)):
+                   # self.update_inverted_file(i)
                 self.curr = 0
 
     def insert_term_to_inv_idx_and_post_dict(self, term, freq_in_doc, doc_idx,
                                              unique_terms_in_doc, document):
         index = self.letters_dict[term[0]]
-        inverted_idx = self.inverted_idx_dicts_list[index]
-        posting_dict = self.posting_dicts_list[index]
 
-        self.inverted_idx_dicts_list[index], self.posting_dicts_list[index] = self.update_inverted_idx_and_posting_dict(
-            term, inverted_idx, posting_dict, freq_in_doc, doc_idx, document, unique_terms_in_doc)
+        if term in self.inverted_idx_dicts_list[index].keys():
+            number_of_docs = self.inverted_idx_dicts_list[index][term][0] + 1
+            freq_in_corpus = self.inverted_idx_dicts_list[index][term][1] + freq_in_doc
+            docs_list = self.inverted_idx_dicts_list[index][term][2]
+            last_doc_idx = self.inverted_idx_dicts_list[index][term][3]
+        else:
+            number_of_docs = 1
+            freq_in_corpus = freq_in_doc
+            docs_list = []
+            last_doc_idx = doc_idx
 
-        if sys.getsizeof(self.inverted_idx_dicts_list[index]) > 2000000:
-            self.update_inverted_file(index)
-        if sys.getsizeof(self.posting_dicts_list[index]) > 2000000:
+        docs_list.append((doc_idx, freq_in_doc))
+
+        self.inverted_idx_dicts_list[index][term] = (number_of_docs, freq_in_corpus, self.differnce_method(docs_list, last_doc_idx), doc_idx)
+        key = term + " " + str(doc_idx)
+        term_indices = [idx for idx, word in enumerate(document[2].split(), 1) if word == term]
+        self.posting_dicts_list[index][key] = [doc_idx, freq_in_doc, term_indices, document[5], unique_terms_in_doc]
+
+        if sys.getsizeof(self.posting_dicts_list[index]) > 4000000:
+            self.inverted_idx_count_for_update[index] += 1
             self.update_posting_file(index)
+            if self.inverted_idx_count_for_update[index] == 3:
+                self.update_inverted_file(index)
+                self.inverted_idx_count_for_update[index] = 0
 
     def update_inverted_idx_and_posting_dict(self, term, inverted_idx, posting_dict, freq_in_doc, doc_idx, document,
                                              unique_terms_in_doc):
@@ -138,7 +158,7 @@ class Indexer:
 
         inverted_idx[term] = (number_of_docs, freq_in_corpus, self.differnce_method(docs_list, last_doc_idx), doc_idx)
         key = term + " " + str(doc_idx)
-        posting_dict[key] = [doc_idx,freq_in_doc, self.index_term_in_text(term, document[2]), document[5], unique_terms_in_doc]
+        posting_dict[key] = [doc_idx, freq_in_doc, self.index_term_in_text(term, document[2]), document[5], unique_terms_in_doc]
 
         return inverted_idx, posting_dict
 

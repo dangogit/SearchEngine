@@ -7,7 +7,7 @@ class Ranker:
 
 
     @staticmethod
-    def rank_relevant_doc(relevant_doc,tf_idf_dict,query_as_list):
+    def rank_relevant_doc(tf_idf_dict,relevent_doc_id_list,query_as_list):
         final_doc_dict={} #list of tuples: (doc_id,rank with this query)
         #need to run on all documents recived here, give them a score, and sort them
         """
@@ -17,7 +17,7 @@ class Ranker:
         @:return: sorted list of documents by score
         """
         #need to implment cosine simularity using tf-idf
-        for doc_id in relevant_doc:
+        for doc_id in relevent_doc_id_list:
             mone=0
             mechane=0
             for term in query_as_list:
