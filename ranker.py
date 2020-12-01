@@ -35,7 +35,7 @@ class Ranker:
                         mechane2+= Wiq**2
             mechane=math.sqrt(mechane1*mechane2)
             final_docs_ranking[doc_id]=mone/mechane
-        return sorted(final_docs_ranking.items(), key=lambda item: item[1], reverse=True)
+        return sorted(final_docs_ranking.items(), key=lambda item: item[1], reverse=True),final_docs_ranking
 
     @staticmethod
     def retrieve_top_k(sorted_relevant_doc, k=1):

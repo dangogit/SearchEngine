@@ -77,7 +77,7 @@ class Searcher:
                                         "inverted_idx_y.json",
                                         "inverted_idx_z.json",
                                         "inverted_idx_hashtags.json"]
-        self.stop_words = {k.lower(): "" for k in stopwords.words('english')}
+        self.stop_words = self.parser.stop_words
 
     # the big matrix is the base for the functions
 
