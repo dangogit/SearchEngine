@@ -213,9 +213,9 @@ def search_and_rank_query(p, output_path, queries, k, total_num_of_docs):
         results_dict = {p.doc_idx_tweet_id[k]: ranked_docs_dict[k] for k in ranked_docs_list_top_k}
         with open('results', 'a') as csv_file:
             writer = csv.writer(csv_file)
-            for key, value in results_dict.items():
+            for key, value in sorted(results_dict.items(), key=lambda x: x[1], reverse=True):
                 writer.writerow([i, key, value])  # query_num, tweet_id, rank
-    i += 1
+        i += 1
 
 
 def main2():

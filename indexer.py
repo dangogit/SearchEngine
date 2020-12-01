@@ -118,7 +118,7 @@ class Indexer:
             docs_list = []
             last_doc_idx = doc_idx
 
-        tf = "{:.2f}".format(float(freq_in_doc)/float(document.doc_length))
+        tf = float(freq_in_doc)/float(document.doc_length)
         docs_list.append([doc_idx, tf])
 
         self.inverted_idx_dicts_list[index][term] = [number_of_docs, self.differnce_method(docs_list, last_doc_idx), doc_idx]
