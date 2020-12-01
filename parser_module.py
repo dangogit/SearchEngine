@@ -30,6 +30,7 @@ class Parse:
         self.curr_idx = -1
         self.doc_idx_tweet_id = {}
 
+
     def parse_sentence(self, text):
         """
         This function tokenize, remove stop words and apply lower case for every word within the text

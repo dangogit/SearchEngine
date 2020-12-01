@@ -193,6 +193,7 @@ class Indexer:
         return inverted_idx_from_file
 
 
+
     def update_posting_file(self, index):
         print("[" + str(datetime.now()) + "] " + "updating posting file of :"+ str(index))
         try:

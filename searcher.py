@@ -169,6 +169,7 @@ class Searcher:
 
         final_dict = {}
 
+
         for term in query_as_list:
             if term in terms_searched.keys():
                 df = terms_idf[term]

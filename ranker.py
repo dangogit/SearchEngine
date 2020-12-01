@@ -15,6 +15,7 @@ class Ranker:
         @:param:param relevant_doc: dictionary of documents that contains at least one term from the query.
         @:return: sorted list of documents by score
         """
+
         # cosine simularity using tf-idf
         query_size = len(query_as_list)
         for doc_id in doc_id_list:

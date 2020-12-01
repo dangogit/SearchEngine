@@ -23,6 +23,7 @@ def run_engine(corpus_path=None, output_path="output", stemming=False):
 
     :return:
     """
+
     os.mkdir(output_path + "/Inverted_files")
     os.mkdir(output_path + "/Posting_files")
 
