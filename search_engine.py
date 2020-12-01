@@ -152,7 +152,7 @@ def main(corpus_path, output_path, stemming, queries, num_docs_to_retrieve):
     corpus_path - הנתיב של הקורפוס
     output_path - הנתיב של הפלט שלכם
     stemming - משתנה בוליאני.
-    queries- צריך לתמוך בשתי אפשרויות, קובץ של שאילתות בו כל שורה מהווה שאילתא (יסופק לכם קובץ לדוגמא) או רשימה (list) של שאילתות כך שכל איבר ברשימה יהווה שאילתא.
+    queries.txt- צריך לתמוך בשתי אפשרויות, קובץ של שאילתות בו כל שורה מהווה שאילתא (יסופק לכם קובץ לדוגמא) או רשימה (list) של שאילתות כך שכל איבר ברשימה יהווה שאילתא.
     num_docs_to_retrieve - מספר מסמכים להחזרה עבור כל שאילתא.
     '''
     total_num_of_docs, p = run_engine(corpus_path, output_path, stemming)
@@ -198,11 +198,14 @@ def load_index():
 def search_and_rank_query(p, output_path, queries, k, total_num_of_docs):
     searcher = Searcher()
     i = 1
+    queries_list = []
     if isinstance(queries, list):
         queries_list = queries
     else:
         with open(queries, 'r') as query_file:
-            queries_list = [line.split(',') for line in query_file.readlines()]
+            queries_lists = [line.replace('\n','').split(',') for line in query_file.readlines()]
+            for query in queries_lists:
+                queries_list.extend(query)
 
     for query in queries_list:
         query_as_list = query.split()
