@@ -69,14 +69,13 @@ def run_engine(corpus_path=None, output_path="output", stemming=False):
         indexer.update_posting_file(i)
         # indexer.fix_posting_files(i)
 
-
     # testing:
     d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
     d2_ts = time.mktime(d2.timetuple())
     print("[" + str(datetime.now()) + "] " + "Finished fixing inverted files in " + str(
         float(d2_ts - d1_ts) / 60) + " minutes")
 
-    #fix_big_small_letters_in_documents(output_path, fmt, p, parsed_files_names)
+    # fix_big_small_letters_in_documents(output_path, fmt, p, parsed_files_names)
 
     return total_num_of_docs
 
@@ -92,20 +91,20 @@ def parse_and_index_tweet_list(output_path, tweet_list, fmt, p, indexer, filenam
         # parse the document
         p.curr_idx = idx
         parsed_document = p.parse_doc(document)
-        #parsed_tweets[idx] = parsed_document
+        # parsed_tweets[idx] = parsed_document
         # add the doucment to indexer here
         indexer.add_new_doc(parsed_document, idx)
         idx += 1
 
     new_filename = filename.replace(".snappy.parquet", ".json")
 
-    #with open(output_path + "/Parsed_files/" + new_filename, 'w', encoding='utf-8') as parsed_file:
-     #   json.dump(parsed_tweets, parsed_file)
-        #parsed_files_names.append(new_filename)
+    # with open(output_path + "/Parsed_files/" + new_filename, 'w', encoding='utf-8') as parsed_file:
+    #   json.dump(parsed_tweets, parsed_file)
+    # parsed_files_names.append(new_filename)
 
-    #with open(output_path + "/Parsed_files/words_to_fix_" + new_filename, 'w', encoding='utf-8') as fix_file:
-      #  json.dump(p.tweets_with_terms_to_fix, fix_file)
-     #   p.tweets_with_terms_to_fix.clear()
+    # with open(output_path + "/Parsed_files/words_to_fix_" + new_filename, 'w', encoding='utf-8') as fix_file:
+    #  json.dump(p.tweets_with_terms_to_fix, fix_file)
+    #   p.tweets_with_terms_to_fix.clear()
 
     print("[" + str(datetime.now()) + "] " + "Finished Parsing and Indexing documents in file: " + filename)
     d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
@@ -155,40 +154,40 @@ def main(corpus_path, output_path, stemming, queries, num_docs_to_retrieve):
     queries- צריך לתמוך בשתי אפשרויות, קובץ של שאילתות בו כל שורה מהווה שאילתא (יסופק לכם קובץ לדוגמא) או רשימה (list) של שאילתות כך שכל איבר ברשימה יהווה שאילתא.
     num_docs_to_retrieve - מספר מסמכים להחזרה עבור כל שאילתא.
     '''
-    #total_num_of_docs = run_engine(corpus_path, output_path, stemming)
-    #print("total number of docs " + str(total_num_of_docs))
-    search_and_rank_query(output_path, queries, num_docs_to_retrieve, 5637311)
+    total_num_of_docs = run_engine(corpus_path, output_path, stemming)
+    print("total number of docs " + str(total_num_of_docs))
+    search_and_rank_query(output_path, queries, num_docs_to_retrieve, total_num_of_docs)
 
 
 def load_index():
     print('Load inverted index')
     inverted_idx_files_list = ["inverted_idx_a",
-                                    "inverted_idx_b",
-                                    "inverted_idx_c",
-                                    "inverted_idx_d",
-                                    "inverted_idx_e",
-                                    "inverted_idx_f",
-                                    "inverted_idx_g",
-                                    "inverted_idx_h",
-                                    "inverted_idx_i",
-                                    "inverted_idx_j",
-                                    "inverted_idx_k",
-                                    "inverted_idx_l",
-                                    "inverted_idx_m",
-                                    "inverted_idx_n",
-                                    "inverted_idx_o",
-                                    "inverted_idx_p",
-                                    "inverted_idx_q",
-                                    "inverted_idx_r",
-                                    "inverted_idx_s",
-                                    "inverted_idx_t",
-                                    "inverted_idx_u",
-                                    "inverted_idx_v",
-                                    "inverted_idx_w",
-                                    "inverted_idx_x",
-                                    "inverted_idx_y",
-                                    "inverted_idx_z",
-                                    "inverted_idx_hashtags"]
+                               "inverted_idx_b",
+                               "inverted_idx_c",
+                               "inverted_idx_d",
+                               "inverted_idx_e",
+                               "inverted_idx_f",
+                               "inverted_idx_g",
+                               "inverted_idx_h",
+                               "inverted_idx_i",
+                               "inverted_idx_j",
+                               "inverted_idx_k",
+                               "inverted_idx_l",
+                               "inverted_idx_m",
+                               "inverted_idx_n",
+                               "inverted_idx_o",
+                               "inverted_idx_p",
+                               "inverted_idx_q",
+                               "inverted_idx_r",
+                               "inverted_idx_s",
+                               "inverted_idx_t",
+                               "inverted_idx_u",
+                               "inverted_idx_v",
+                               "inverted_idx_w",
+                               "inverted_idx_x",
+                               "inverted_idx_y",
+                               "inverted_idx_z",
+                               "inverted_idx_hashtags"]
     inverted_index = {}
     for filename in inverted_idx_files_list:
         inverted_index.update(utils.load_obj(filename))
@@ -215,8 +214,8 @@ def search_and_rank_query(output_path, queries, k, total_num_of_docs):
         with open('results', 'a') as csv_file:
             writer = csv.writer(csv_file)
             for key, value in results_dict.items():
-                writer.writerow([i, key, value]) # query_num, tweet_id, rank
-    i+=1
+                writer.writerow([i, key, value])  # query_num, tweet_id, rank
+    i += 1
 
 
 def main2():
