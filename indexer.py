@@ -75,10 +75,6 @@ class Indexer:
                                    "posting_file_z.json",
                                    "posting_file_hashtags.json"]
         self.config = config
-        self.key = 0
-        self.curr = 0
-        self.term_index = 0
-        self.updated_terms = {}
         self.output_path = output_path
         self.words_dict = p.word_set
 
@@ -97,7 +93,7 @@ class Indexer:
         # Go over each term in the doc
         for term in document_dictionary.keys():
             try:
-                if not term.isalpha():
+                if term[0] not in self.letters_dict.keys():
                     continue
                 # freq of term in all corpus until now
                 freq_in_doc = document_dictionary[term]
@@ -108,14 +104,6 @@ class Indexer:
                 print('problem with the following key {}'.format(term))
                 traceback.print_exc()
 
-            self.curr += 1
-
-            if self.curr == 5000000:
-                #self.update_inverted_and_posting_file()  # this function updates and sorts the dictionries
-                # self.update_inverted_idx_files(document_dictionary,doc_idx)
-               # for i in range(len(self.inverted_idx_dicts_list)):
-                   # self.update_inverted_file(i)
-                self.curr = 0
 
     def insert_term_to_inv_idx_and_post_dict(self, term, freq_in_doc, doc_idx,
                                              unique_terms_in_doc, max_tf, document):
@@ -123,12 +111,10 @@ class Indexer:
 
         if term in self.inverted_idx_dicts_list[index].keys():
             number_of_docs = self.inverted_idx_dicts_list[index][term][0] + 1
-            #freq_in_corpus = self.inverted_idx_dicts_list[index][term][1] + freq_in_doc
             docs_list = self.inverted_idx_dicts_list[index][term][1]
             last_doc_idx = self.inverted_idx_dicts_list[index][term][2]
         else:
             number_of_docs = 1
-            #freq_in_corpus = freq_in_doc
             docs_list = []
             last_doc_idx = doc_idx
 
@@ -189,18 +175,14 @@ class Indexer:
         while len(inverted_idx_dict.keys()) > 0:
             term, values_of_term = inverted_idx_dict.popitem()
 
-            if term not in self.words_dict.keys():
-                term = term.upper()
-
             if term in inverted_idx_from_file.keys():
                 number_of_docs = inverted_idx_from_file[term][0] + values_of_term[0]
-                #freq_in_corpus = inverted_idx_from_file[term][1] + inverted_idx_dict[term][1]
                 docs_list_from_file = inverted_idx_from_file[term][1]
                 docs_list_from_local = values_of_term[1]
                 last_doc_idx_from_file = inverted_idx_from_file[term][2]
                 docs_list_from_file.append(docs_list_from_local[0])
                 docs_list_from_file = self.differnce_method(docs_list_from_file, last_doc_idx_from_file)
-                docs_list_from_file.append(docs_list_from_local[1:])
+                docs_list_from_file.extend(docs_list_from_local[1:])
                 last_doc_idx_from_local = values_of_term[2]
 
                 inverted_idx_from_file[term] = [
@@ -243,14 +225,15 @@ class Indexer:
             traceback.print_exc()
 
         print("[" + str(datetime.now()) + "] " + "merging...")
-        for i in range(1,len(inverted_dicts_from_file)):
+        for i in range(1, len(inverted_dicts_from_file)):
             base_dict = inverted_dicts_from_file[0]
             inverted_dicts_from_file[0] = self.merge_inverted_idx_dicts(base_dict, inverted_dicts_from_file[i])
 
+        fixed_inverted_dict = self.fix_big_and_small_letters(inverted_dicts_from_file[0])
         # to json:
         try:
             with open(self.output_path+"/Inverted_files/" +self.inverted_idx_files_list[index], 'w', encoding='utf-8') as posting_file:
-                json.dump(inverted_dicts_from_file[0], posting_file)
+                json.dump(fixed_inverted_dict, posting_file)
         except:
             traceback.print_exc()
 
@@ -279,4 +262,14 @@ class Indexer:
         print("[" + str(datetime.now()) + "] " + "finished fixing posting file of :" + str(index))
 
 
+
+    def fix_big_and_small_letters(self, inverted_dict):
+        fixed_dict = {}
+        for term in inverted_dict.keys():
+            if term not in self.words_dict.keys():
+                new_term = term.upper()
+                fixed_dict[new_term] = inverted_dict[term]
+            else:
+                fixed_dict[term] = inverted_dict[term]
+        return fixed_dict
 

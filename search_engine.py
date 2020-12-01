@@ -27,7 +27,7 @@ def run_engine(corpus_path=None, output_path="output", stemming=False):
     os.mkdir(output_path + "/Posting_files")
 
     config = ConfigClass()
-    r = ReadFile(corpus_path=config.get__corpusPath())
+    r = ReadFile(corpus_path=corpus_path)
     p = Parse()
     if stemming:
         p.steamer = Stemmer()
@@ -68,6 +68,7 @@ def run_engine(corpus_path=None, output_path="output", stemming=False):
         indexer.fix_inverted_files(i)
         indexer.update_posting_file(i)
         # indexer.fix_posting_files(i)
+
 
     # testing:
     d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
@@ -155,25 +156,58 @@ def main(corpus_path, output_path, stemming, queries, num_docs_to_retrieve):
     num_docs_to_retrieve - מספר מסמכים להחזרה עבור כל שאילתא.
     '''
     total_num_of_docs = run_engine(corpus_path, output_path, stemming)
-    search_and_rank_query(queries, num_docs_to_retrieve, total_num_of_docs)
+    print("total number of docs" + str(total_num_of_docs))
+    search_and_rank_query(output_path, queries, num_docs_to_retrieve, total_num_of_docs)
 
 
 def load_index():
     print('Load inverted index')
-    inverted_index = utils.load_obj("inverted_idx")
+    inverted_idx_files_list = ["inverted_idx_a",
+                                    "inverted_idx_b",
+                                    "inverted_idx_c",
+                                    "inverted_idx_d",
+                                    "inverted_idx_e",
+                                    "inverted_idx_f",
+                                    "inverted_idx_g",
+                                    "inverted_idx_h",
+                                    "inverted_idx_i",
+                                    "inverted_idx_j",
+                                    "inverted_idx_k",
+                                    "inverted_idx_l",
+                                    "inverted_idx_m",
+                                    "inverted_idx_n",
+                                    "inverted_idx_o",
+                                    "inverted_idx_p",
+                                    "inverted_idx_q",
+                                    "inverted_idx_r",
+                                    "inverted_idx_s",
+                                    "inverted_idx_t",
+                                    "inverted_idx_u",
+                                    "inverted_idx_v",
+                                    "inverted_idx_w",
+                                    "inverted_idx_x",
+                                    "inverted_idx_y",
+                                    "inverted_idx_z",
+                                    "inverted_idx_hashtags"]
+    inverted_index = {}
+    for filename in inverted_idx_files_list:
+        inverted_index.update(utils.load_obj(filename))
     return inverted_index
 
 
-def search_and_rank_query(queries, k, total_num_of_docs):
+def search_and_rank_query(output_path, queries, k, total_num_of_docs):
     p = Parse()
     searcher = Searcher()
     i = 1
-    if queries is not list:
+    if isinstance(queries, list):
+        queries_list = queries
+    else:
         with open(queries, 'r') as query_file:
             queries_list = [line.split(',') for line in query_file.readlines()]
+
     for query in queries_list:
-        query_as_list = p.parse_sentence(query)
-        final_dict, doc_id_list = searcher.relevant_docs_from_posting(query_as_list, total_num_of_docs)
+        query_as_list = query.split()
+        final_dict, doc_id_list = searcher.relevant_docs_from_posting(output_path, query_as_list, total_num_of_docs)
         ranked_docs_list, ranked_docs_dict = searcher.ranker.rank_relevant_doc(final_dict, doc_id_list,
                                                                                query_as_list)
         ranked_docs_list_top_k = searcher.ranker.retrieve_top_k(ranked_docs_list, k)
@@ -185,7 +219,7 @@ def search_and_rank_query(queries, k, total_num_of_docs):
     i+=1
 
 
-def main():
+def main2():
     total_num_of_docs = run_engine()
     query = input("Please enter a query: ")
     k = int(input("Please enter number of docs to retrieve: "))

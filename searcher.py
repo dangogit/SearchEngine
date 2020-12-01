@@ -97,32 +97,6 @@ class Searcher:
         return synomus
 
     # return list of list
-    def get_tf_from_inverted_idx(self, term, inverted_index):
-        main_list = []
-        doc_id_list = []
-        letter_dict = self.letters_dict
-        tmp_doc_list = []
-        location_list = inverted_index[term][2]
-        print("location size list is: " + str(len(location_list)))  # location list of the term
-        tmp_add = 0  # recover the location list
-        for tmp_tuple in location_list:
-            # differnce method
-            tmp_add += tmp_tuple[0]
-            # key = term+" "+str(tmp_add)
-            tmp_doc_list.append(int(tmp_add))  # add doc_id to dic id list
-            doc_id_list.append(int(tmp_add))
-            Fij = inverted_index[term][1]  # freq in doc
-            Dj = inverted_index[term][3]  # Dj, doucment length
-            tf = Fij / Dj  # calculate tf by formula
-            tmp_doc_list.append(tf)
-            main_list.append(tmp_doc_list)
-            # tmp
-
-        # here need to sort list and return 2000 biggest dfi doucments?
-        main_list = main_list.sort(key=lambda x: x[1])
-        main_list = main_list[:2000]
-        doc_id_list = sorted(doc_id_list)
-        return main_list, doc_id_list
 
     def revocer_doc_ids(self, doc_id_tf_list):
         tmp_add = 0
@@ -131,12 +105,12 @@ class Searcher:
             tmp_list[0] = tmp_add
         return doc_id_tf_list
 
-    def get_right_inverted_index(self, letter):
+    def get_right_inverted_index(self, output_path, letter):
         idx = self.letters_dict[letter]
         inverted_index_dict_list = self.inverted_idx_files_list
         # find the right posting file according to first letter of the term
         try:
-            with open("Inverted_files/" + inverted_index_dict_list[idx], 'r', encoding='utf-8') as posting_file:
+            with open(output_path+"/Inverted_files/" + inverted_index_dict_list[idx], 'r', encoding='utf-8') as posting_file:
                 inverted_idx_from_file = json.load(posting_file)
         except:
             print("could not find right dictionary in searcher")
@@ -144,7 +118,7 @@ class Searcher:
         return inverted_idx_from_file
 
     # N= total amount of document in the corpus
-    def relevant_docs_from_posting(self, query_as_list, total_num_of_docs):
+    def relevant_docs_from_posting(self, output_path, query_as_list, total_num_of_docs):
         # query is list
         """
         This function loads the posting list and count the amount of relevant documents per term.
@@ -166,15 +140,15 @@ class Searcher:
         total_id_dict_list = []  # lists that holds all suspuicous id's and then find the common
         for new_term in query_as_list:
             try:
-                inverted_index = self.get_right_inverted_index(new_term[0])
+                inverted_index = self.get_right_inverted_index(output_path, new_term[0])
                 if new_term in inverted_index.keys():
                     terms_idf[new_term] = inverted_index[new_term][0]
                     # recover doc_id
                     # inverted_index[1]=[[doc id,tf],[doc_id,tf]...]
-                    docs_list = self.revocer_doc_ids(inverted_index[new_term][2])  # fix difference method
+                    docs_list = self.revocer_doc_ids(inverted_index[new_term][1])  # fix difference method
                     # now dictionary
                     # sort by tf
-                    sorted_docs_list = sorted(docs_list, key=lambda x: x[1], reverse=True)
+                    sorted_docs_list = sorted(docs_list, key=lambda x: float(x[1]), reverse=True)
                     # get 2000 best results
                     best_2000_docs = sorted_docs_list[:2000]
                     terms_searched[new_term] = dict(best_2000_docs)
