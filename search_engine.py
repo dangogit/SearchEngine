@@ -77,7 +77,7 @@ def run_engine(corpus_path=None, output_path="output", stemming=False):
 
     # fix_big_small_letters_in_documents(output_path, fmt, p, parsed_files_names)
 
-    return total_num_of_docs
+    return total_num_of_docs, p
 
 
 def parse_and_index_tweet_list(output_path, tweet_list, fmt, p, indexer, filename, parsed_files_names, idx):
@@ -154,9 +154,9 @@ def main(corpus_path, output_path, stemming, queries, num_docs_to_retrieve):
     queries- צריך לתמוך בשתי אפשרויות, קובץ של שאילתות בו כל שורה מהווה שאילתא (יסופק לכם קובץ לדוגמא) או רשימה (list) של שאילתות כך שכל איבר ברשימה יהווה שאילתא.
     num_docs_to_retrieve - מספר מסמכים להחזרה עבור כל שאילתא.
     '''
-    total_num_of_docs = run_engine(corpus_path, output_path, stemming)
+    total_num_of_docs, p = run_engine(corpus_path, output_path, stemming)
     print("total number of docs " + str(total_num_of_docs))
-    search_and_rank_query(output_path, queries, num_docs_to_retrieve, total_num_of_docs)
+    search_and_rank_query(p, output_path, queries, num_docs_to_retrieve, total_num_of_docs)
 
 
 def load_index():
@@ -194,8 +194,7 @@ def load_index():
     return inverted_index
 
 
-def search_and_rank_query(output_path, queries, k, total_num_of_docs):
-    p = Parse()
+def search_and_rank_query(p, output_path, queries, k, total_num_of_docs):
     searcher = Searcher()
     i = 1
     if isinstance(queries, list):
