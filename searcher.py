@@ -161,7 +161,7 @@ class Searcher:
                     # get seperate doc_id list
                     # doc_id_list = [item[0] for item in inverted_index[new_term][1]]
                     # [[dict_1,tf1],[dict2,tf2]...]
-                    total_id_dict_list.append([inverted_index[new_term][1], inverted_index[new_term][0]])
+                  #  total_id_dict_list.append([inverted_index[new_term][1], inverted_index[new_term][0]])
             except:
                 traceback.print_exc()
 
@@ -170,16 +170,21 @@ class Searcher:
         final_dict = {}
 
         for term in query_as_list:
-            for doc_id in doc_id_list:
-                if term in terms_searched.keys():
+            if term in terms_searched.keys():
+                df = terms_idf[term]
+                for doc_id in doc_id_list:
                     tf = terms_searched[term][doc_id]
-                    df = terms_idf[term]
-                    final_dict[term] = [tf, df, doc_id]
+                    if term not in final_dict.keys():
+                        final_dict[term] = [[tf, df, doc_id]]
+                    else:
+                        final_dict[term].append([tf, df, doc_id])
 
         return final_dict, doc_id_list
 
     def get_intersection(self, terms_searched):
         k, res = terms_searched.popitem()  # res is list of doc ids
+        keeper = res
         for docs_dict in terms_searched.values():
             res = res & docs_dict.keys()
+        terms_searched[k] = keeper
         return res

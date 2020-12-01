@@ -211,7 +211,7 @@ def search_and_rank_query(output_path, queries, k, total_num_of_docs):
         ranked_docs_list, ranked_docs_dict = searcher.ranker.rank_relevant_doc(final_dict, doc_id_list,
                                                                                query_as_list)
         ranked_docs_list_top_k = searcher.ranker.retrieve_top_k(ranked_docs_list, k)
-        results_dict = {p.doc_idx_tweet_id[k]: ranked_docs_dict[k] for k in ranked_docs_dict.keys() if k in ranked_docs_list_top_k}
+        results_dict = {p.doc_idx_tweet_id[k]: ranked_docs_dict[k] for k in ranked_docs_list_top_k}
         with open('results', 'a') as csv_file:
             writer = csv.writer(csv_file)
             for key, value in results_dict.items():
