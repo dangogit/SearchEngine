@@ -140,7 +140,13 @@ class Searcher:
         total_id_dict_list = []  # lists that holds all suspuicous id's and then find the common
         for new_term in query_as_list:
             try:
-                inverted_index = self.get_right_inverted_index(output_path, new_term[0])
+                inverted_index = self.get_right_inverted_index(output_path, new_term[0].lower())
+                if new_term not in inverted_index.keys():
+                    if new_term.lower() in inverted_index.keys():
+                        new_term = new_term.lower()
+                    elif new_term.upper() in inverted_index.keys():
+                        new_term = new_term.upper()
+
                 if new_term in inverted_index.keys():
                     terms_idf[new_term] = inverted_index[new_term][0]
                     # recover doc_id
@@ -165,9 +171,10 @@ class Searcher:
 
         for term in query_as_list:
             for doc_id in doc_id_list:
-                tf = terms_searched[term][doc_id]
-                df = terms_idf[term]
-                final_dict[term] = [tf, df, doc_id]
+                if term in terms_searched.keys():
+                    tf = terms_searched[term][doc_id]
+                    df = terms_idf[term]
+                    final_dict[term] = [tf, df, doc_id]
 
         return final_dict, doc_id_list
 

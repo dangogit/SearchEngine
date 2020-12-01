@@ -155,9 +155,9 @@ def main(corpus_path, output_path, stemming, queries, num_docs_to_retrieve):
     queries- צריך לתמוך בשתי אפשרויות, קובץ של שאילתות בו כל שורה מהווה שאילתא (יסופק לכם קובץ לדוגמא) או רשימה (list) של שאילתות כך שכל איבר ברשימה יהווה שאילתא.
     num_docs_to_retrieve - מספר מסמכים להחזרה עבור כל שאילתא.
     '''
-    total_num_of_docs = run_engine(corpus_path, output_path, stemming)
-    print("total number of docs" + str(total_num_of_docs))
-    search_and_rank_query(output_path, queries, num_docs_to_retrieve, total_num_of_docs)
+    #total_num_of_docs = run_engine(corpus_path, output_path, stemming)
+    #print("total number of docs " + str(total_num_of_docs))
+    search_and_rank_query(output_path, queries, num_docs_to_retrieve, 5637311)
 
 
 def load_index():
