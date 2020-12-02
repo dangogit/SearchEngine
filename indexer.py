@@ -1,9 +1,6 @@
 import time
 import traceback
-from datetime import datetime
-import pandas as pd
 import json
-import collections
 import sys
 
 
@@ -102,8 +99,7 @@ class Indexer:
                                                           document)
 
             except:
-                print('problem with the following key {}'.format(term))
-                traceback.print_exc()
+                pass
 
     def insert_term_to_inv_idx_and_post_dict(self, term, freq_in_doc, doc_idx,
                                              unique_terms_in_doc, max_tf, document):
@@ -193,27 +189,27 @@ class Indexer:
         return inverted_idx_from_file
 
     def update_posting_file(self, index):
-        print("[" + str(datetime.now()) + "] " + "updating posting file of :" + str(index))
+       # print("[" + str(datetime.now()) + "] " + "updating posting file of :" + str(index))
         try:
             with open(self.output_path + self.posting_files_list[index], 'a', encoding='utf-8') as posting_file:
                 jsonstr = json.dumps(self.posting_dicts_list[index])
                 posting_file.write((jsonstr + "\n"))
                 self.posting_dicts_list[index].clear()
         except:
-            traceback.print_exc()
+            pass
 
     def update_inv_file(self, index):
-        print("[" + str(datetime.now()) + "] " + "updating inverted file of :" + str(index))
+       # print("[" + str(datetime.now()) + "] " + "updating inverted file of :" + str(index))
         try:
             with open(self.output_path + self.inverted_idx_files_list[index], 'a', encoding='utf-8') as inverted_file:
                 jsonstr = json.dumps(self.inverted_idx_dicts_list[index])
                 inverted_file.write((jsonstr + "\n"))
                 self.inverted_idx_dicts_list[index].clear()
         except:
-            traceback.print_exc()
+            pass
 
     def fix_inverted_files(self, index):
-        print("[" + str(datetime.now()) + "] " + "fixing inverted files of :" + str(index))
+       # print("[" + str(datetime.now()) + "] " + "fixing inverted files of :" + str(index))
         inverted_dicts_from_file = []
         try:
             with open(self.output_path + self.inverted_idx_files_list[index], 'r',
@@ -221,9 +217,10 @@ class Indexer:
                 for line in inverted_file.readlines():
                     inverted_dicts_from_file.append(json.loads(line))
         except:
-            traceback.print_exc()
+            pass
 
-        print("[" + str(datetime.now()) + "] " + "merging...")
+
+       # print("[" + str(datetime.now()) + "] " + "merging...")
         for i in range(1, len(inverted_dicts_from_file)):
             base_dict = inverted_dicts_from_file[0]
             inverted_dicts_from_file[0] = self.merge_inverted_idx_dicts(base_dict, inverted_dicts_from_file[i])
@@ -235,12 +232,12 @@ class Indexer:
                       encoding='utf-8') as posting_file:
                 json.dump(fixed_inverted_dict, posting_file)
         except:
-            traceback.print_exc()
+            pass
 
-        print("[" + str(datetime.now()) + "] " + "finished fixing inverted file of :" + str(index))
+       # print("[" + str(datetime.now()) + "] " + "finished fixing inverted file of :" + str(index))
 
     def fix_posting_files(self, index):
-        print("[" + str(datetime.now()) + "] " + "fixing posting files of :" + str(index))
+      #  print("[" + str(datetime.now()) + "] " + "fixing posting files of :" + str(index))
         posting_dict_from_file = []
         try:
             with open(self.output_path + self.posting_files_list[index], 'r',
@@ -248,8 +245,8 @@ class Indexer:
                 for line in posting_file.readlines():
                     posting_dict_from_file.append(json.loads(line))
         except:
-            traceback.print_exc()
-        print("[" + str(datetime.now()) + "] " + "sorting...")
+            pass
+     #   print("[" + str(datetime.now()) + "] " + "sorting...")
         posting_dict_from_file = self.sort_dictionarys(posting_dict_from_file)
 
         # to json:
@@ -258,9 +255,9 @@ class Indexer:
                       encoding='utf-8') as posting_file:
                 json.dump(posting_dict_from_file, posting_file)
         except:
-            traceback.print_exc()
+            pass
 
-        print("[" + str(datetime.now()) + "] " + "finished fixing posting file of :" + str(index))
+    #    print("[" + str(datetime.now()) + "] " + "finished fixing posting file of :" + str(index))
 
     def fix_big_and_small_letters(self, inverted_dict):
         fixed_dict = {}

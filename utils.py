@@ -21,7 +21,7 @@ def load_obj(name):
     with open(name + '.json','r', encoding='utf-8' ) as f:
         return json.load(f)
 
-def load_inverted_index():
+def load_inverted_index(output_path = 'posting\\'):
     inverted_idx_files_list = ["inverted_idx_a",
                                "inverted_idx_b",
                                "inverted_idx_c",
@@ -51,7 +51,7 @@ def load_inverted_index():
                                "inverted_idx_hashtags"]
     inverted_index = {}
     for filename in inverted_idx_files_list:
-        with open('posting\\'+filename + '.json', 'r', encoding='utf-8') as f:
+        with open(output_path+filename + '.json', 'r', encoding='utf-8') as f:
             dict = json.load(f)
             inverted_index.update(dict)
     return inverted_index

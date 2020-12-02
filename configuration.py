@@ -7,7 +7,5 @@ class ConfigClass:
         self.savePostingFile = self.savedFileMainFolder + "/PostingFile"
         self.toStem = False
 
-        print('Project was created successfully..')
-
     def get__corpusPath(self):
         return self.corpusPath

@@ -33,13 +33,12 @@ def run_engine(corpus_path=None, output_path="output", stemming=False):
     if stemming:
         p.steamer = Stemmer()
     indexer = Indexer(config, output_path, p)
-    fmt = '%Y-%m-%d %H:%M:%S'
-    parsed_files_names = []
+    #fmt = '%Y-%m-%d %H:%M:%S'
     idx = 0
-    print(datetime.now())
-    print("[" + str(datetime.now()) + "] " + "Reading files...")
-    d1 = datetime.strptime(datetime.now().strftime(fmt), fmt)
-    d1_ts = time.mktime(d1.timetuple())
+    #print(datetime.now())
+    #print("[" + str(datetime.now()) + "] " + "Reading files...")
+    #d1 = datetime.strptime(datetime.now().strftime(fmt), fmt)
+   # d1_ts = time.mktime(d1.timetuple())
 
     total_num_of_docs = 0
 
@@ -51,18 +50,17 @@ def run_engine(corpus_path=None, output_path="output", stemming=False):
                     if ".parquet" in filename:
                         new_path = new_path + "\\" + filename
                         tweet_list = r.read_file(new_path)  # holds list of the tweets as text
-                        idx = parse_and_index_tweet_list(output_path, tweet_list, fmt, p, indexer, filename,
-                                                         parsed_files_names, idx)
+                        idx = parse_and_index_tweet_list(tweet_list, p, indexer, idx)
                         total_num_of_docs += idx
 
-    d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
-    d2_ts = time.mktime(d2.timetuple())
-    print("[" + str(datetime.now()) + "] " + "Finished Parsing and Indexing documents in " + str(
-        float(d2_ts - d1_ts) / 60) + " minutes")
+    #d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
+    #d2_ts = time.mktime(d2.timetuple())
+    #print("[" + str(datetime.now()) + "] " + "Finished Parsing and Indexing documents in " + str(
+     #   float(d2_ts - d1_ts) / 60) + " minutes")
 
-    print("[" + str(datetime.now()) + "] " + "Fixing inverted files...")
-    d1 = datetime.strptime(datetime.now().strftime(fmt), fmt)
-    d1_ts = time.mktime(d1.timetuple())
+   # print("[" + str(datetime.now()) + "] " + "Fixing inverted files...")
+    #d1 = datetime.strptime(datetime.now().strftime(fmt), fmt)
+    #d1_ts = time.mktime(d1.timetuple())
 
     for i in range(len(indexer.letters_dict)):
         indexer.update_inv_file(i)
@@ -71,22 +69,21 @@ def run_engine(corpus_path=None, output_path="output", stemming=False):
         # indexer.fix_posting_files(i)
 
     # testing:
-    d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
-    d2_ts = time.mktime(d2.timetuple())
-    print("[" + str(datetime.now()) + "] " + "Finished fixing inverted files in " + str(
-        float(d2_ts - d1_ts) / 60) + " minutes")
+    #d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
+    #d2_ts = time.mktime(d2.timetuple())
+    #print("[" + str(datetime.now()) + "] " + "Finished fixing inverted files in " + str(
+     #   float(d2_ts - d1_ts) / 60) + " minutes")
 
     # fix_big_small_letters_in_documents(output_path, fmt, p, parsed_files_names)
 
     return total_num_of_docs, p
 
 
-def parse_and_index_tweet_list(output_path, tweet_list, fmt, p, indexer, filename, parsed_files_names, idx):
-    parsed_tweets = {}
-    print("[" + str(datetime.now()) + "] " + "Parsing and Indexing documents in file: " + filename + " " + str(
-        sys.getsizeof(tweet_list) / 1000000) + "mb")
-    d1 = datetime.strptime(datetime.now().strftime(fmt), fmt)
-    d1_ts = time.mktime(d1.timetuple())
+def parse_and_index_tweet_list(tweet_list, p, indexer, idx):
+   # print("[" + str(datetime.now()) + "] " + "Parsing and Indexing documents in file: " + filename + " " + str(
+    #    sys.getsizeof(tweet_list) / 1000000) + "mb")
+    #d1 = datetime.strptime(datetime.now().strftime(fmt), fmt)
+    #d1_ts = time.mktime(d1.timetuple())
 
     for document in tweet_list:
         # parse the document
@@ -97,7 +94,7 @@ def parse_and_index_tweet_list(output_path, tweet_list, fmt, p, indexer, filenam
         indexer.add_new_doc(parsed_document, idx)
         idx += 1
 
-    new_filename = filename.replace(".snappy.parquet", ".json")
+    #new_filename = filename.replace(".snappy.parquet", ".json")
 
     # with open(output_path + "/Parsed_files/" + new_filename, 'w', encoding='utf-8') as parsed_file:
     #   json.dump(parsed_tweets, parsed_file)
@@ -107,45 +104,12 @@ def parse_and_index_tweet_list(output_path, tweet_list, fmt, p, indexer, filenam
     #  json.dump(p.tweets_with_terms_to_fix, fix_file)
     #   p.tweets_with_terms_to_fix.clear()
 
-    print("[" + str(datetime.now()) + "] " + "Finished Parsing and Indexing documents in file: " + filename)
-    d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
-    d2_ts = time.mktime(d2.timetuple())
-    print(str(float(d2_ts - d1_ts) / 60) + " minutes")
+    #print("[" + str(datetime.now()) + "] " + "Finished Parsing and Indexing documents in file: " + filename)
+    #d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
+    #d2_ts = time.mktime(d2.timetuple())
+    #print(str(float(d2_ts - d1_ts) / 60) + " minutes")
 
     return idx
-
-
-def fix_big_small_letters_in_documents(output_path, fmt, p, parsed_files_names):
-    print("[" + str(datetime.now()) + "] " + "Fixing big&small letters in all documents...")
-    d1 = datetime.strptime(datetime.now().strftime(fmt), fmt)
-    d1_ts = time.mktime(d1.timetuple())
-    parsed_tweets_dict = {}
-    for filename in parsed_files_names:
-        try:
-            with open(output_path + filename, 'r', encoding='utf-8') as parsed_file:
-                parsed_tweets_dict = json.load(parsed_file)
-
-            with open(output_path + filename, 'r', encoding='utf-8') as fix_file:
-                p.tweets_with_terms_to_fix = json.load(fix_file)
-        except:
-            traceback.print_exc()
-
-        for index in parsed_tweets_dict.keys():
-            if int(index) in p.tweets_with_terms_to_fix.keys():
-                parsed_tweets_dict[index][2] = p.fix_word_with_future_change(int(index), parsed_tweets_dict[index][2])
-        # to json:
-        try:
-            with open(output_path + filename, 'w', encoding='utf-8') as parsed_file:
-                json.dump(parsed_tweets_dict, parsed_file)
-
-        except:
-            traceback.print_exc()
-
-    d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
-    d2_ts = time.mktime(d2.timetuple())
-    print("[" + str(datetime.now()) + "] " + "Finished fixing documents in " + str(
-        float(d2_ts - d1_ts) / 60) + " minutes")
-
 
 def main(corpus_path, output_path, stemming, queries, num_docs_to_retrieve):
     '''
@@ -157,12 +121,12 @@ def main(corpus_path, output_path, stemming, queries, num_docs_to_retrieve):
     '''
     output_path += '\\'
     total_num_of_docs, p = run_engine(corpus_path, output_path, stemming)
-    print("total number of docs " + str(total_num_of_docs))
+    #print("total number of docs " + str(total_num_of_docs))
     search_and_rank_query(p, output_path, queries, num_docs_to_retrieve, total_num_of_docs)
 
 
 def load_index():
-    print('Load inverted index')
+    #print('Load inverted index')
     return utils.load_inverted_index()
 
 
@@ -172,18 +136,16 @@ def search_and_rank_query(p, output_path, queries, k, total_num_of_docs):
     if isinstance(queries, list):
         queries_list = queries
     else:
-        with open(queries, 'r') as query_file:
+        with open(queries, 'r', encoding='utf-8') as query_file:
             queries_lists = [line.replace('\n','').split(',') for line in query_file.readlines() if line != '']
             for query in queries_lists:
                 queries_list.extend(query)
 
     with open('results.csv', 'w') as csv_file:
         writer = csv.writer(csv_file)
-    i = 0
+
     for query in queries_list:
         query_as_list = query.split()
-        if i == 1:
-            print("a")
         final_dict, doc_id_list = searcher.relevant_docs_from_posting(output_path, query_as_list, total_num_of_docs)
         ranked_docs_list, ranked_docs_dict = searcher.ranker.rank_relevant_doc(final_dict, doc_id_list,
                                                                                query_as_list)
@@ -192,8 +154,9 @@ def search_and_rank_query(p, output_path, queries, k, total_num_of_docs):
         if len(results_dict) > 0:
             with open('results.csv', 'a') as csv_file:
                 for key, value in sorted(results_dict.items(), key=lambda x: x[1], reverse=True):
-                    csv_file.write("Tweet id: {" + str(key) + "} Score: {" + str(value) + "}\n")  # query_num, tweet_id, rank
-        i+=1
+                    res_line = "Tweet id: {" + str(key) + "} Score: {" + str(value) + "}"
+                    csv_file.write(res_line +"\n")  # query_num, tweet_id, rank
+                    print(res_line)
 
 def main2():
     total_num_of_docs = run_engine()

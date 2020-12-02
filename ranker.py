@@ -49,7 +49,7 @@ class Ranker:
                     res = 0
                 final_docs_ranking[doc_id] = res
         except:
-            traceback.print_exc()
+            pass
 
         return [pair[0] for pair in sorted(final_docs_ranking.items(), key=lambda item: item[1], reverse=True)], final_docs_ranking
 

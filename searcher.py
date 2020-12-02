@@ -93,7 +93,7 @@ class Searcher:
                     elif count >= 2:
                         return synomus
         except:
-            print("could not find synomus for the word: " + term)
+            pass
         return synomus
 
     # return list of list
@@ -116,7 +116,7 @@ class Searcher:
             with open(output_path + inverted_index_dict_list[idx], 'r', encoding='utf-8') as posting_file:
                 inverted_idx_from_file = json.load(posting_file)
         except:
-            print("could not find right dictionary in searcher")
+            pass
 
         return inverted_idx_from_file
 
@@ -150,7 +150,7 @@ class Searcher:
                         new_term = new_term.lower()
                     elif new_term.upper() in inverted_index.keys():
                         new_term = new_term.upper()
-                    print("not found "+new_term)
+
 
                 if new_term in inverted_index.keys():
                     terms_idf[new_term] = math.log2(float(total_num_of_docs)/float(inverted_index[new_term][0]))
@@ -169,7 +169,7 @@ class Searcher:
                     # [[dict_1,tf1],[dict2,tf2]...]
                   #  total_id_dict_list.append([inverted_index[new_term][1], inverted_index[new_term][0]])
             except:
-                traceback.print_exc()
+                pass
 
         doc_id_list = doc_id_dict.keys()
         final_dict = {}
@@ -186,7 +186,7 @@ class Searcher:
                             else:
                                 final_dict[term].append([tf, df, doc_id])
         except:
-            traceback.print_exc()
+            pass
 
         return final_dict, doc_id_list
 

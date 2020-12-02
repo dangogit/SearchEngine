@@ -1,19 +1,12 @@
 import math
 
-import pandas as pd
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from document import Document
-from urllib.parse import urlparse
 import re
-import nltk
 
 
 class Parse:
-    # todo:
-    # 1. funtion to fix all the capital and non capital words in the cursor
-    # 2. add the 2 new parsing methods
-    # 3. tests
 
     def __init__(self):
         self.asci_code_to_remove = {33: None, 34: None, 36: None, 38: None, 39: None, 40: None, 41: None, 42: None,
@@ -274,7 +267,6 @@ class Parse:
 
         millnames = ['', 'K', 'M', 'B']
         n = float(text)
-        # print(n)
         try:
             millidx = max(0, min(len(millnames) - 1,
                                  int(math.floor(0 if n == 0 else math.log10(abs(n)) / 3))))
@@ -292,62 +284,3 @@ class Parse:
                                                                                                      'K').replace(
             'billion', 'B').replace('million', 'M')
 
-    def parse_Entities(self, text):
-        doc = self.nlp(text)
-        for entity in doc.ents:
-            if entity.label_ is not "DATE" and entity.label_ is not "CARDINAL" and entity.label_ is not "QUANTITY" and "@" not in str(
-                    entity):
-                if str(entity) in self.suspucious_words_for_entites.keys():
-                    self.suspucious_words_for_entites[str(entity)] += text.count(str(entity))
-                else:
-                    self.suspucious_words_for_entites[str(entity)] = text.count(str(entity))
-
-    def check_word_lowercase(self, words_list, idx):
-        if words_list is None:
-            return words_list
-        count = 0
-        for word in words_list:
-            # word = re.sub('[0-9\[\]/"{},.:-]+', '', word)
-            if not word.isalpha() or "#" in word:
-                count += 1
-                continue
-
-            if word.islower():
-                if word not in self.word_set.keys():
-                    self.word_set[word] = None
-
-            elif word[0].isupper():
-                if word.lower() in self.word_set.keys():
-                    words_list[count] = word.lower()
-                else:
-                    self.add_word_to_future_change(idx, word)
-            count += 1
-
-        return words_list
-
-    def check_capital(self, text):
-        if "#" in text:
-            text = text.replace("#", "")
-        for letter in text:
-            if (letter.isnumeric() == False and letter.isupper() == False):
-                return False
-        return True
-
-    def add_word_to_future_change(self, idx, word):
-        if word is None or not word.isalpha():
-            return
-        if idx not in self.tweets_with_terms_to_fix.keys():  # new tweet
-            self.tweets_with_terms_to_fix[idx] = {word: None}
-
-        elif word not in self.tweets_with_terms_to_fix[idx].keys():  # old tweet, new word
-            self.tweets_with_terms_to_fix[idx][word] = None
-
-    def fix_word_with_future_change(self, idx, text):
-        if text is None:
-            return text
-        for word in self.tweets_with_terms_to_fix[idx].keys():
-            if word.lower() in self.word_set.keys():
-                text = text.replace(word, word.lower())
-            else:
-                text = text.replace(word, word.upper())
-        return text
