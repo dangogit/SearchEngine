@@ -52,7 +52,7 @@ class Parse:
         tweet_id = doc_as_list[0]
         tweet_date = doc_as_list[1]
         full_text = doc_as_list[2]
-        terms_list = self.parse_all_text(full_text, self.curr_idx)
+        terms_list = self.parse_all_text(full_text)
         full_text = ' '.join(terms_list)
         url = doc_as_list[3]
         # url = self.parse_URL(url)
@@ -89,7 +89,7 @@ class Parse:
 
     # returns a list of all the terms in the URL divided by /, = and .
 
-    def parse_all_text(self, text, doc_idx):
+    def parse_all_text(self, text):
         if text is None:
             return text
         text = text.encode('ascii', 'replace').decode()
@@ -100,6 +100,8 @@ class Parse:
         copy_text = text.split()
         copy_text = [w for w in copy_text if w[0] != '\/' and w.lower() not in self.stop_words.keys()]
         count = 0
+        hashtags = []
+        urls = []
         for word in copy_text:
             if word == '':
                 count += 1
@@ -110,10 +112,12 @@ class Parse:
                 continue
 
             elif 'http' in word or 'www' in word:
-                copy_text[count] = self.parse_URL(word)
+                copy_text[count] = ''
+                urls.extend(self.parse_URL(word))
 
             elif word[0] == '#':
-                copy_text[count] = self.parse_hashtag(word)
+                copy_text[count] = ''
+                hashtags.extend(self.parse_hashtag(word))
 
             elif word[0].isnumeric():  # if found number check next word
                 try:  # check if its only number
@@ -167,8 +171,10 @@ class Parse:
                     #else:
                         #self.add_word_to_future_change(doc_idx, word)
             count += 1
-
-        return [w for w in copy_text if w != '']
+        hashtags.extend(urls)
+        copy_text.extend(hashtags)
+        final_list = [w for w in copy_text if w != '']
+        return final_list
 
     def check_numeric(self, text):
         for charcter in text:
@@ -239,7 +245,7 @@ class Parse:
                 if (text[k].isnumeric() == True):
                     tmp_word = tmp_word + text[k]
             word_list.append(tmp_word.lower())
-        return ' '.join(word_list)
+        return word_list
 
     def parse_URL(self, url):
         tmp_word = ""
@@ -254,7 +260,7 @@ class Parse:
                 tmp_word = tmp_word + url[i]
             else:
                 word_list.append(tmp_word)
-        return ' '.join(word_list)
+        return word_list
 
     def parse_precentage(self, text):
         return text.replace("percentage", "%").replace("percent", "%").replace(" ", "")

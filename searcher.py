@@ -106,11 +106,13 @@ class Searcher:
         return doc_id_tf_list
 
     def get_right_inverted_index(self, output_path, letter):
+        if letter not in self.letters_dict.keys():
+            return {}
         idx = self.letters_dict[letter]
         inverted_index_dict_list = self.inverted_idx_files_list
         # find the right posting file according to first letter of the term
         try:
-            with open(output_path+"/Inverted_files/" + inverted_index_dict_list[idx], 'r', encoding='utf-8') as posting_file:
+            with open(output_path + inverted_index_dict_list[idx], 'r', encoding='utf-8') as posting_file:
                 inverted_idx_from_file = json.load(posting_file)
         except:
             print("could not find right dictionary in searcher")
@@ -132,7 +134,7 @@ class Searcher:
         terms_searched = {}
         terms_idf = {}
         similar_terms = []
-        query_as_list = self.parser.parse_all_text(' '.join(query_as_list).lower(), 0)  #
+        query_as_list = self.parser.parse_all_text(' '.join(query_as_list).lower())  #
         for term in query_as_list:
             # query expansion
             similar_terms += set(self.get_similar_words(term))  # list
@@ -183,6 +185,8 @@ class Searcher:
         return final_dict, doc_id_list
 
     def get_intersection(self, terms_searched):
+        if len(terms_searched) == 0:
+            return {}
         k, res = terms_searched.popitem()  # res is list of doc ids
         keeper = res
         for docs_dict in terms_searched.values():

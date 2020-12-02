@@ -24,14 +24,15 @@ def run_engine(corpus_path=None, output_path="output", stemming=False):
     :return:
     """
 
-    os.mkdir(output_path + "/Inverted_files")
-    os.mkdir(output_path + "/Posting_files")
+    if not os.path.isdir(output_path):
+        os.mkdir(output_path)
 
     config = ConfigClass()
     r = ReadFile(corpus_path=corpus_path)
     p = Parse()
     if stemming:
         p.steamer = Stemmer()
+    output_path +='\\'
     indexer = Indexer(config, output_path, p)
     fmt = '%Y-%m-%d %H:%M:%S'
     parsed_files_names = []
@@ -122,10 +123,10 @@ def fix_big_small_letters_in_documents(output_path, fmt, p, parsed_files_names):
     parsed_tweets_dict = {}
     for filename in parsed_files_names:
         try:
-            with open(output_path + "/Parsed_files/" + filename, 'r', encoding='utf-8') as parsed_file:
+            with open(output_path + filename, 'r', encoding='utf-8') as parsed_file:
                 parsed_tweets_dict = json.load(parsed_file)
 
-            with open(output_path + "/Parsed_files/words_to_fix_" + filename, 'r', encoding='utf-8') as fix_file:
+            with open(output_path + filename, 'r', encoding='utf-8') as fix_file:
                 p.tweets_with_terms_to_fix = json.load(fix_file)
         except:
             traceback.print_exc()
@@ -135,7 +136,7 @@ def fix_big_small_letters_in_documents(output_path, fmt, p, parsed_files_names):
                 parsed_tweets_dict[index][2] = p.fix_word_with_future_change(int(index), parsed_tweets_dict[index][2])
         # to json:
         try:
-            with open(output_path + "/Parsed_files/" + filename, 'w', encoding='utf-8') as parsed_file:
+            with open(output_path + filename, 'w', encoding='utf-8') as parsed_file:
                 json.dump(parsed_tweets_dict, parsed_file)
 
         except:
@@ -162,37 +163,7 @@ def main(corpus_path, output_path, stemming, queries, num_docs_to_retrieve):
 
 def load_index():
     print('Load inverted index')
-    inverted_idx_files_list = ["inverted_idx_a",
-                               "inverted_idx_b",
-                               "inverted_idx_c",
-                               "inverted_idx_d",
-                               "inverted_idx_e",
-                               "inverted_idx_f",
-                               "inverted_idx_g",
-                               "inverted_idx_h",
-                               "inverted_idx_i",
-                               "inverted_idx_j",
-                               "inverted_idx_k",
-                               "inverted_idx_l",
-                               "inverted_idx_m",
-                               "inverted_idx_n",
-                               "inverted_idx_o",
-                               "inverted_idx_p",
-                               "inverted_idx_q",
-                               "inverted_idx_r",
-                               "inverted_idx_s",
-                               "inverted_idx_t",
-                               "inverted_idx_u",
-                               "inverted_idx_v",
-                               "inverted_idx_w",
-                               "inverted_idx_x",
-                               "inverted_idx_y",
-                               "inverted_idx_z",
-                               "inverted_idx_hashtags"]
-    inverted_index = {}
-    for filename in inverted_idx_files_list:
-        inverted_index.update(utils.load_obj(filename))
-    return inverted_index
+    return utils.load_inverted_index()
 
 
 def search_and_rank_query(p, output_path, queries, k, total_num_of_docs):
@@ -214,7 +185,7 @@ def search_and_rank_query(p, output_path, queries, k, total_num_of_docs):
                                                                                query_as_list)
         ranked_docs_list_top_k = searcher.ranker.retrieve_top_k(ranked_docs_list, k)
         results_dict = {p.doc_idx_tweet_id[k]: ranked_docs_dict[k] for k in ranked_docs_list_top_k}
-        with open('results', 'a') as csv_file:
+        with open('results.csv', 'a') as csv_file:
             writer = csv.writer(csv_file)
             for key, value in sorted(results_dict.items(), key=lambda x: x[1], reverse=True):
                 writer.writerow([i, key, value])  # query_num, tweet_id, rank
