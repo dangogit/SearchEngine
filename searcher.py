@@ -106,8 +106,9 @@ class Searcher:
         return doc_id_tf_list
 
     def get_right_inverted_index(self, output_path, letter):
+        inverted_idx_from_file = {}
         if letter not in self.letters_dict.keys():
-            return {}
+            return inverted_idx_from_file
         idx = self.letters_dict[letter]
         inverted_index_dict_list = self.inverted_idx_files_list
         # find the right posting file according to first letter of the term
@@ -134,6 +135,7 @@ class Searcher:
         terms_searched = {}
         terms_idf = {}
         similar_terms = []
+        doc_id_dict = {}
         query_as_list = self.parser.parse_all_text(' '.join(query_as_list).lower())  #
         for term in query_as_list:
             # query expansion
@@ -148,9 +150,10 @@ class Searcher:
                         new_term = new_term.lower()
                     elif new_term.upper() in inverted_index.keys():
                         new_term = new_term.upper()
+                    print("not found "+new_term)
 
                 if new_term in inverted_index.keys():
-                    terms_idf[new_term] = inverted_index[new_term][0]
+                    terms_idf[new_term] = math.log2(float(total_num_of_docs)/float(inverted_index[new_term][0]))
                     # recover doc_id
                     # inverted_index[1]=[[doc id,tf],[doc_id,tf]...]
                     docs_list = self.revocer_doc_ids(inverted_index[new_term][1])  # fix difference method
@@ -159,6 +162,7 @@ class Searcher:
                     sorted_docs_list = sorted(docs_list, key=lambda x: float(x[1]), reverse=True)
                     # get 2000 best results
                     best_2000_docs = sorted_docs_list[:2000]
+                    doc_id_dict.update(dict(best_2000_docs))
                     terms_searched[new_term] = dict(best_2000_docs)
                     # get seperate doc_id list
                     # doc_id_list = [item[0] for item in inverted_index[new_term][1]]
@@ -167,20 +171,22 @@ class Searcher:
             except:
                 traceback.print_exc()
 
-        doc_id_list = self.get_intersection(terms_searched)
-
+        doc_id_list = doc_id_dict.keys()
         final_dict = {}
 
-
-        for term in query_as_list:
-            if term in terms_searched.keys():
-                df = terms_idf[term]
-                for doc_id in doc_id_list:
-                    tf = terms_searched[term][doc_id]
-                    if term not in final_dict.keys():
-                        final_dict[term] = [[tf, df, doc_id]]
-                    else:
-                        final_dict[term].append([tf, df, doc_id])
+        try:
+            for term in query_as_list:
+                if term in terms_searched.keys():
+                    df = terms_idf[term]
+                    for doc_id in doc_id_list:
+                        if doc_id in terms_searched[term].keys():
+                            tf = terms_searched[term][doc_id]
+                            if term not in final_dict.keys():
+                                final_dict[term] = [[tf, df, doc_id]]
+                            else:
+                                final_dict[term].append([tf, df, doc_id])
+        except:
+            traceback.print_exc()
 
         return final_dict, doc_id_list
 

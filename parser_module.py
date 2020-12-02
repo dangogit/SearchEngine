@@ -20,7 +20,9 @@ class Parse:
                                     43: None, 44: None, 45: " ", 46: None, 58: None, 59: None, 60: None, 61: None,
                                     62: None, 63: None, 91: None, 92: None, 93: None, 94: None, 96: None, 123: None,
                                     124: None, 125: None, 126: None}
-        self.stop_words = {k.lower(): "" for k in stopwords.words('english')}
+        stopwords_list = stopwords.words('english') + ['?', '!', ',', '+', '-', '*', '"', '.', '<', '>', '=', ':', '', '{', '{}', '}', '[', ']', '[]', 'are',
+           'and', 'an', 'at', 'am', 'a', 'even', 'every', 'everyone']
+        self.stop_words = {k.lower(): "" for k in stopwords_list}
         self.suspucious_words_for_entites = {}  # dictionary of suspicious words for entites, key is the term and value is the nubmer of apperances
         self.word_set = {}
         self.tweets_with_terms_to_fix = {}
