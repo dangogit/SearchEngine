@@ -18,7 +18,7 @@ from nltk.corpus import stopwords
 from datetime import datetime
 
 
-def run_engine(corpus_path=None, output_path="output", stemming=False):
+def run_engine(corpus_path=None, output_path="posting", stemming=False):
     """
 
     :return:
@@ -137,7 +137,7 @@ def search_and_rank_query(p, output_path, queries, k, total_num_of_docs):
         queries_list = queries
     else:
         with open(queries, 'r', encoding='utf-8') as query_file:
-            queries_lists = [line.replace('\n','').split(',') for line in query_file.readlines() if line != '']
+            queries_lists = [line.split('\n') for line in query_file.readlines() if line != '\n']
             for query in queries_lists:
                 queries_list.extend(query)
 
@@ -145,6 +145,8 @@ def search_and_rank_query(p, output_path, queries, k, total_num_of_docs):
         writer = csv.writer(csv_file)
 
     for query in queries_list:
+        if len(query) <= 1:
+            continue
         query_as_list = query.split()
         final_dict, doc_id_list = searcher.relevant_docs_from_posting(output_path, query_as_list, total_num_of_docs)
         ranked_docs_list, ranked_docs_dict = searcher.ranker.rank_relevant_doc(final_dict, doc_id_list,

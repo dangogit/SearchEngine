@@ -116,7 +116,7 @@ class Searcher:
             with open(output_path + inverted_index_dict_list[idx], 'r', encoding='utf-8') as posting_file:
                 inverted_idx_from_file = json.load(posting_file)
         except:
-            pass
+            traceback.print_exc()
 
         return inverted_idx_from_file
 
@@ -169,7 +169,7 @@ class Searcher:
                     # [[dict_1,tf1],[dict2,tf2]...]
                   #  total_id_dict_list.append([inverted_index[new_term][1], inverted_index[new_term][0]])
             except:
-                pass
+                traceback.print_exc()
 
         doc_id_list = doc_id_dict.keys()
         final_dict = {}
@@ -186,7 +186,7 @@ class Searcher:
                             else:
                                 final_dict[term].append([tf, df, doc_id])
         except:
-            pass
+            traceback.print_exc()
 
         return final_dict, doc_id_list
 
