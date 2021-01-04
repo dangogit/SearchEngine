@@ -12,8 +12,8 @@ class ConfigClass:
 
         self.corpusPath = ''
         self.savedFileMainFolder = ''
-        self.saveFilesWithStem = self.savedFileMainFolder + "/WithStem"
-        self.saveFilesWithoutStem = self.savedFileMainFolder + "/WithoutStem"
+        self.saveFilesWithStem = self.savedFileMainFolder + "rC:\Users\dorle\PycharmProjects\IRpart3\Search_Engine\data/WithStem"
+        self.saveFilesWithoutStem = self.savedFileMainFolder + r"C:\Users\dorle\PycharmProjects\IRpart3\Search_Engine\data/WithoutStem"
         self.toStem = False
 
         print('Project was created successfully..')
