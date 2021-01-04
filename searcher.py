@@ -17,6 +17,7 @@ class Searcher:
         """
         :param inverted_index: dictionary of inverted index
         """
+        self.terms_searched = {}
         self.parser = Parse()
         self.ranker = Ranker()
         # self.inverted_index = inverted_index
@@ -132,7 +133,7 @@ class Searcher:
         # dictionary that will be passed to the ranker in the following form:
         # tf_idf_dict={term:[[doc_id,num of appearnces in this doc],...],term:[[]],idf}
         tf_idf_dict = {}
-        terms_searched = {}
+
         terms_idf = {}
         similar_terms = []
         doc_id_dict = {}
@@ -163,7 +164,7 @@ class Searcher:
                     # get 2000 best results
                     best_2000_docs = sorted_docs_list[:2000]
                     doc_id_dict.update(dict(best_2000_docs))
-                    terms_searched[new_term] = dict(best_2000_docs)
+                    self.terms_searched[new_term] = dict(best_2000_docs)
                     # get seperate doc_id list
                     # doc_id_list = [item[0] for item in inverted_index[new_term][1]]
                     # [[dict_1,tf1],[dict2,tf2]...]
@@ -176,11 +177,11 @@ class Searcher:
 
         try:
             for term in query_as_list:
-                if term in terms_searched.keys():
+                if term in self.terms_searched.keys():
                     df = terms_idf[term]
                     for doc_id in doc_id_list:
-                        if doc_id in terms_searched[term].keys():
-                            tf = terms_searched[term][doc_id]
+                        if doc_id in self.terms_searched[term].keys():
+                            tf = self.terms_searched[term][doc_id]
                             if term not in final_dict.keys():
                                 final_dict[term] = [[tf, df, doc_id]]
                             else:
