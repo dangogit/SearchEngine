@@ -52,7 +52,7 @@ def run_engine(corpus_path=None, output_path="posting", stemming=False):
                         tweet_list = r.read_file(new_path)  # holds list of the tweets as text
                         idx = parse_and_index_tweet_list(tweet_list, p, indexer, idx)
                         total_num_of_docs += idx
-
+#
     #d2 = datetime.strptime(datetime.now().strftime(fmt), fmt)
     #d2_ts = time.mktime(d2.timetuple())
     #print("[" + str(datetime.now()) + "] " + "Finished Parsing and Indexing documents in " + str(
