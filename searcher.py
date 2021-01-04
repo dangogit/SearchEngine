@@ -22,6 +22,7 @@ class Searcher:
         self._model = model
 
     ###############################################################################################
+    #
     #ours
     # the big matrix is the base for the functions
     def get_similar_words(self, term):
