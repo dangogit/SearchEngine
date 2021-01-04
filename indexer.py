@@ -9,8 +9,7 @@ class Indexer:
     # You can change the internal implementation as you see fit.
     def __init__(self, config):
         self.curr_idx=0
-        self.term_indexer_dict={} # key = term, value = [number_of_docs(df), docs_list ,last_doc_idx]
-
+        self.term_indexer_dict={} # key = term, value = [number_of_docs(df), docs_list=[doc_id, tf] ,last_doc_idx]
         self.file_indexer_dict={} # key = doc_idx, value = { key = term, value = tf}
         self.config = config
         #self.output_path = output_path
@@ -40,18 +39,15 @@ class Indexer:
             try:
                 # freq of term in all corpus until now
                 freq_in_doc = document_dictionary[term]
-                self.insert_term_to_inv_idx(term, freq_in_doc, self.curr_idx, unique_terms_in_doc, max_tf,
-                                            document)
-                self.insert_file_to_inv_idx(term, freq_in_doc, max_tf)
-                #{doc_id:[(term,tf).(term,tf)...]}
-                #freq_in_doc/max_tf=tf
-                #df=num_of_docs
+                tf = float(freq_in_doc) / float(max_tf)
+                self.insert_term_to_inv_idx(term, self.curr_idx, tf)
+                self.insert_file_to_inv_idx(term, freq_in_doc, tf)
+
 
             except:
                 traceback.print_exc()
 
-    def insert_term_to_inv_idx(self, term, freq_in_doc, doc_idx,
-                               unique_terms_in_doc, max_tf, document):
+    def insert_term_to_inv_idx(self, term, doc_idx, tf):
        # index = self.letters_dict[term[0]]
 
         if term in self.term_indexer_dict.keys():
@@ -63,15 +59,13 @@ class Indexer:
             docs_list = []
             last_doc_idx = doc_idx
 
-        tf = float(freq_in_doc) / float(max_tf)
-        docs_list.append(doc_idx)
+        docs_list.append(doc_idx, tf)
 
         self.term_indexer_dict[term] = [number_of_docs, self.differnce_method(docs_list, last_doc_idx),
                                         doc_idx]
 
-    def insert_file_to_inv_idx(self, term, freq_in_doc, max_tf):
+    def insert_file_to_inv_idx(self, term, tf):
 
-        tf = float(freq_in_doc) / float(max_tf)
         if self.curr_idx not in self.file_indexer_dict.keys():
             self.file_indexer_dict[self.curr_idx] = {}
 
@@ -81,8 +75,8 @@ class Indexer:
     def differnce_method(self, list, last_doc_index):
         i = len(list) - 1
         if i != 0:
-            new_value = list[i] - last_doc_index
-            list[i] = new_value
+            new_value = list[i][0] - last_doc_index
+            list[i] = [new_value, list[i][1]]
         return list
 
     def index_term_in_text(self, term, text):
@@ -266,4 +260,4 @@ class Indexer:
         """
         Return the posting list from the index for a term.
         """
-        return self.term_indexer_dict[term][1] if self._is_term_exist(term) else []
+        return self.postingDict[term] if self._is_term_exist(term) else []
