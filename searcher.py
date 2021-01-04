@@ -6,6 +6,7 @@ from nltk.corpus import wordnet
 
 from parser_module import Parse
 from ranker import Ranker
+
 import utils
 ##stamagainsdads
 
@@ -20,6 +21,7 @@ class Searcher:
         self._indexer = indexer
         self._ranker = Ranker()
         self._model = model
+        self.terms_searched={}
 
     ###############################################################################################
     #
@@ -45,8 +47,8 @@ class Searcher:
     def revocer_doc_ids(self, doc_id_tf_list):
         tmp_add = 0
         for tmp_list in doc_id_tf_list:
-            tmp_add += tmp_list
-            tmp_list = tmp_add
+            tmp_add += tmp_list[0]
+            tmp_list[0] = tmp_add
         return doc_id_tf_list
 
 
@@ -66,7 +68,7 @@ class Searcher:
         terms_idf = {}
         similar_terms = []
         doc_id_dict = {}
-        query_as_list = self.parser.parse_all_text(' '.join(query_as_list).lower())  #
+        query_as_list = self._parser.parse_all_text(' '.join(query_as_list).lower())  #
         for term in query_as_list:
             # query expansion
             similar_terms += set(self.get_similar_words(term))  # list
@@ -88,11 +90,11 @@ class Searcher:
                     docs_list = self.revocer_doc_ids(self._indexer.term_indexer_dict[new_term][1])  # fix difference method
                     # now dictionary
                     # sort by tf
-                    sorted_docs_list = sorted(docs_list, key=lambda x: float(x[1]), reverse=True)
+                    #sorted_docs_list = sorted(docs_list, key=lambda x: float(x[1]), reverse=True)
                     # get 2000 best results
-                    best_2000_docs = sorted_docs_list[:2000]
-                    doc_id_dict.update(dict(best_2000_docs))
-                    self.terms_searched[new_term] = dict(best_2000_docs)
+                    #best_2000_docs = sorted_docs_list[:2000]
+                    doc_id_dict.update(dict(docs_list))
+                    self.terms_searched[new_term] = dict(docs_list)
                     # get seperate doc_id list
                     # doc_id_list = [item[0] for item in inverted_index[new_term][1]]
                     # [[dict_1,tf1],[dict2,tf2]...]
@@ -117,7 +119,17 @@ class Searcher:
         except:
             traceback.print_exc()
 
-        return final_dict, doc_id_list
+            for doc_id in doc_id_list:
+                for term in self._indexer.file_indexer_dict[doc_id].keys():
+                    if term not in self.terms_searched.keys():
+                        tf = self._indexer.file_indexer_dict[doc_id]
+                        df = math.log2(float(total_num_of_docs) / float(self._indexer.term_indexer_dict[term][0]))
+                        if term not in final_dict.keys():
+                            final_dict[term] = [[tf, df, doc_id]]
+                        else:
+                            final_dict[term].append([tf, df, doc_id])
+
+        return final_dict, doc_id_list, self._indexer.file_indexer_dict
 
 
     ######################################################################################################################################
