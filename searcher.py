@@ -4,7 +4,7 @@ import traceback
 
 from ranker import Ranker
 import utils
-
+#stam
 
 # DO NOT MODIFY CLASS NAME
 class Searcher:
