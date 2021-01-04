@@ -45,8 +45,8 @@ class Searcher:
     def revocer_doc_ids(self, doc_id_tf_list):
         tmp_add = 0
         for tmp_list in doc_id_tf_list:
-            tmp_add += tmp_list[0]
-            tmp_list[0] = tmp_add
+            tmp_add += tmp_list
+            tmp_list = tmp_add
         return doc_id_tf_list
 
 
@@ -74,18 +74,18 @@ class Searcher:
         total_id_dict_list = []  # lists that holds all suspuicous id's and then find the common
         for new_term in query_as_list:
             try:
-                if new_term not in self._indexer.inverted_dict.keys():
-                    if new_term.lower() in self._indexer.inverted_dict.keys():
+                if new_term not in self._indexer.term_indexer_dict.keys():
+                    if new_term.lower() in self._indexer.term_indexer_dict.keys():
                         new_term = new_term.lower()
-                    elif new_term.upper() in self._indexer.inverted_dict.keys():
+                    elif new_term.upper() in self._indexer.term_indexer_dict.keys():
                         new_term = new_term.upper()
 
 
-                if new_term in self._indexer.inverted_dict.keys():
-                    terms_idf[new_term] = math.log2(float(total_num_of_docs)/float(self._indexer.inverted_dict[new_term][0]))
+                if new_term in self._indexer.term_indexer_dict.keys():
+                    terms_idf[new_term] = math.log2(float(total_num_of_docs)/float(self._indexer.term_indexer_dict[new_term][0]))
                     # recover doc_id
                     # inverted_index[1]=[[doc id,tf],[doc_id,tf]...]
-                    docs_list = self.revocer_doc_ids(self._indexer.inverted_dict[new_term][1])  # fix difference method
+                    docs_list = self.revocer_doc_ids(self._indexer.term_indexer_dict[new_term][1])  # fix difference method
                     # now dictionary
                     # sort by tf
                     sorted_docs_list = sorted(docs_list, key=lambda x: float(x[1]), reverse=True)
