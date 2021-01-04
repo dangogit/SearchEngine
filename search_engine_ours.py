@@ -92,7 +92,8 @@ def parse_and_index_tweet_list(tweet_list, p, indexer, idx):
         parsed_document = p.parse_doc(document)
         # parsed_tweets[idx] = parsed_document
         # add the doucment to indexer here
-        indexer.add_new_doc(parsed_document, idx)
+        indexer.set_idx(idx)
+        indexer.add_new_doc(parsed_document)
         idx += 1
 
     #new_filename = filename.replace(".snappy.parquet", ".json")
