@@ -283,4 +283,3 @@ class Parse:
         return text.replace('Thousand', 'K').replace('Million', 'M').replace('Billion', 'B').replace('thousand',
                                                                                                      'K').replace(
             'billion', 'B').replace('million', 'M')
-

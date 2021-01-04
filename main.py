@@ -1,5 +1,4 @@
-import search_engine
+import search_engine_best
 
 if __name__ == '__main__':
-    #search_engine.main()
-    search_engine.main(corpus_path = 'testData', output_path='posting', stemming=False, queries='queries.txt', num_docs_to_retrieve=2000)
+    search_engine_best.main()

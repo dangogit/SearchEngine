@@ -1,13 +1,13 @@
-import time
-import traceback
+# DO NOT MODIFY CLASS NAME
 import json
 import sys
+import traceback
 
 
 class Indexer:
-
-    def __init__(self, config, output_path, p):
-        # new_dictonaries
+    # DO NOT MODIFY THIS SIGNATURE
+    # You can change the internal implementation as you see fit.
+    def __init__(self, config):
         self.letters_dict = {'a': 0, 'b': 1, 'c': 2, 'd': 3, 'e': 4, 'f': 5, 'g': 6, 'h': 7, 'i': 8, 'j': 9, 'k': 10,
                              'l': 11, 'm': 12, 'n': 13, 'o': 14, 'p': 15, 'q': 16, 'r': 17, 's': 18, 't': 19, 'u': 20,
                              'v': 21, 'w': 22, 'x': 23, 'y': 24, 'z': 25, '#': 26}
@@ -72,16 +72,20 @@ class Indexer:
                                    "posting_file_z.json",
                                    "posting_file_hashtags.json"]
         self.config = config
-        self.output_path = output_path
-        self.words_dict = p.word_set
+        #self.output_path = output_path
+        #self.words_dict = p.word_set
 
-    def add_new_doc(self, document, doc_idx):
+    #####################################################################################################
+    #ours
+    # DO NOT MODIFY THIS SIGNATURE
+    # You can change the internal implementation as you see fit.
+    def add_new_doc(self, document):
         """
-        This function perform indexing process for a document object.
-        Saved information is captures via two dictionaries ('inverted index' and 'posting')
-        :param document: a document need to be indexed.
-        :return: -
-        """
+               This function perform indexing process for a document object.
+               Saved information is captures via two dictionaries ('inverted index' and 'posting')
+               :param document: a document need to be indexed.
+               :return: -
+               """
         document_dictionary = document.term_doc_dictionary  # term_dict
         if len(document_dictionary) == 0:
             return
@@ -131,7 +135,7 @@ class Indexer:
                 self.update_inv_file(index)
                 self.inverted_idx_count_for_update[index] = 0
 
-    # list of tuples(doc_num, number of apperances in doc)
+        # list of tuples(doc_num, number of apperances in doc)
     def differnce_method(self, list, last_doc_index):
         i = len(list) - 1
         if i != 0:
@@ -189,7 +193,7 @@ class Indexer:
         return inverted_idx_from_file
 
     def update_posting_file(self, index):
-       # print("[" + str(datetime.now()) + "] " + "updating posting file of :" + str(index))
+        # print("[" + str(datetime.now()) + "] " + "updating posting file of :" + str(index))
         try:
             with open(self.output_path + self.posting_files_list[index], 'a', encoding='utf-8') as posting_file:
                 jsonstr = json.dumps(self.posting_dicts_list[index])
@@ -199,7 +203,7 @@ class Indexer:
             traceback.print_exc()
 
     def update_inv_file(self, index):
-       # print("[" + str(datetime.now()) + "] " + "updating inverted file of :" + str(index))
+        # print("[" + str(datetime.now()) + "] " + "updating inverted file of :" + str(index))
         try:
             with open(self.output_path + self.inverted_idx_files_list[index], 'a', encoding='utf-8') as inverted_file:
                 jsonstr = json.dumps(self.inverted_idx_dicts_list[index])
@@ -209,7 +213,7 @@ class Indexer:
             traceback.print_exc()
 
     def fix_inverted_files(self, index):
-       # print("[" + str(datetime.now()) + "] " + "fixing inverted files of :" + str(index))
+        # print("[" + str(datetime.now()) + "] " + "fixing inverted files of :" + str(index))
         inverted_dicts_from_file = []
         try:
             with open(self.output_path + self.inverted_idx_files_list[index], 'r',
@@ -219,8 +223,7 @@ class Indexer:
         except:
             traceback.print_exc()
 
-
-       # print("[" + str(datetime.now()) + "] " + "merging...")
+        # print("[" + str(datetime.now()) + "] " + "merging...")
         for i in range(1, len(inverted_dicts_from_file)):
             base_dict = inverted_dicts_from_file[0]
             inverted_dicts_from_file[0] = self.merge_inverted_idx_dicts(base_dict, inverted_dicts_from_file[i])
@@ -236,10 +239,10 @@ class Indexer:
         except:
             traceback.print_exc()
 
-       # print("[" + str(datetime.now()) + "] " + "finished fixing inverted file of :" + str(index))
+    # print("[" + str(datetime.now()) + "] " + "finished fixing inverted file of :" + str(index))
 
     def fix_posting_files(self, index):
-      #  print("[" + str(datetime.now()) + "] " + "fixing posting files of :" + str(index))
+        #  print("[" + str(datetime.now()) + "] " + "fixing posting files of :" + str(index))
         posting_dict_from_file = []
         try:
             with open(self.output_path + self.posting_files_list[index], 'r',
@@ -248,7 +251,7 @@ class Indexer:
                     posting_dict_from_file.append(json.loads(line))
         except:
             traceback.print_exc()
-     #   print("[" + str(datetime.now()) + "] " + "sorting...")
+        #   print("[" + str(datetime.now()) + "] " + "sorting...")
         posting_dict_from_file = self.sort_dictionarys(posting_dict_from_file)
 
         # to json:
@@ -270,3 +273,42 @@ class Indexer:
             else:
                 fixed_dict[term] = inverted_dict[term]
         return fixed_dict
+
+
+    ####################################################################################
+
+    # DO NOT MODIFY THIS SIGNATURE
+    # You can change the internal implementation as you see fit.
+    def load_index(self, fn):
+        """
+        Loads a pre-computed index (or indices) so we can answer queries.
+        Input:
+            fn - file name of pickled index.
+        """
+        raise NotImplementedError
+
+    # DO NOT MODIFY THIS SIGNATURE
+    # You can change the internal implementation as you see fit.
+    def save_index(self, fn):
+        """
+        Saves a pre-computed index (or indices) so we can save our work.
+        Input:
+              fn - file name of pickled index.
+        """
+        raise NotImplementedError
+
+    # feel free to change the signature and/or implementation of this function 
+    # or drop altogether.
+    def _is_term_exist(self, term):
+        """
+        Checks if a term exist in the dictionary.
+        """
+        return term in self.postingDict
+
+    # feel free to change the signature and/or implementation of this function 
+    # or drop altogether.
+    def get_term_posting_list(self, term):
+        """
+        Return the posting list from the index for a term.
+        """
+        return self.postingDict[term] if self._is_term_exist(term) else []

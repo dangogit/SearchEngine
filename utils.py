@@ -1,5 +1,9 @@
 import pickle
-import json
+import requests
+import zipfile
+import re
+
+
 
 def save_obj(obj, name):
     """
@@ -8,8 +12,8 @@ def save_obj(obj, name):
     :param name: name of the pickle file.
     :return: -
     """
-    with open(name + '.json', 'w', encoding='utf-8') as f:
-        json.dump(obj, f)
+    with open(name + '.pkl', 'wb') as f:
+        pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
 
 
 def load_obj(name):
@@ -18,40 +22,43 @@ def load_obj(name):
     :param name: name of the pickle file
     :return: loaded pickle file
     """
-    with open(name + '.json','r', encoding='utf-8' ) as f:
-        return json.load(f)
+    with open(name + '.pkl', 'rb') as f:
+        return pickle.load(f)
 
-def load_inverted_index(output_path = 'posting\\'):
-    inverted_idx_files_list = ["inverted_idx_a",
-                               "inverted_idx_b",
-                               "inverted_idx_c",
-                               "inverted_idx_d",
-                               "inverted_idx_e",
-                               "inverted_idx_f",
-                               "inverted_idx_g",
-                               "inverted_idx_h",
-                               "inverted_idx_i",
-                               "inverted_idx_j",
-                               "inverted_idx_k",
-                               "inverted_idx_l",
-                               "inverted_idx_m",
-                               "inverted_idx_n",
-                               "inverted_idx_o",
-                               "inverted_idx_p",
-                               "inverted_idx_q",
-                               "inverted_idx_r",
-                               "inverted_idx_s",
-                               "inverted_idx_t",
-                               "inverted_idx_u",
-                               "inverted_idx_v",
-                               "inverted_idx_w",
-                               "inverted_idx_x",
-                               "inverted_idx_y",
-                               "inverted_idx_z",
-                               "inverted_idx_hashtags"]
-    inverted_index = {}
-    for filename in inverted_idx_files_list:
-        with open(output_path+filename + '.json', 'r', encoding='utf-8') as f:
-            dict = json.load(f)
-            inverted_index.update(dict)
-    return inverted_index
+
+__fid_ptrn = re.compile("(?<=/folders/)([\w-]+)|(?<=%2Ffolders%2F)([\w-]+)|(?<=/file/d/)([\w-]+)|(?<=%2Ffile%2Fd%2F)([\w-]+)|(?<=id=)([\w-]+)|(?<=id%3D)([\w-]+)")
+__gdrive_url = "https://docs.google.com/uc?export=download"
+def download_file_from_google_drive(url, destination):
+    m = __fid_ptrn.search(url)
+    if m is None:
+        raise ValueError(f'Could not identify google drive file id in {url}.')
+    file_id = m.group()
+    session = requests.Session()
+
+    response = session.get(__gdrive_url, params = { 'id' : file_id }, stream = True)
+    token = _get_confirm_token(response)
+
+    if token:
+        params = { 'id' : file_id, 'confirm' : token }
+        response = session.get(__gdrive_url, params = params, stream = True)
+
+    _save_response_content(response, destination)    
+
+def _get_confirm_token(response):
+    for key, value in response.cookies.items():
+        if key.startswith('download_warning'):
+            return value
+
+    return None
+
+def _save_response_content(response, destination):
+    CHUNK_SIZE = 32768
+
+    with open(destination, "wb") as f:
+        for chunk in response.iter_content(CHUNK_SIZE):
+            if chunk: # filter out keep-alive new chunks
+                f.write(chunk)
+        
+def unzip_file(file_path, target_dir):
+    with zipfile.ZipFile(file_path, 'r') as z:
+        z.extractall(target_dir)
