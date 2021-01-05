@@ -54,7 +54,11 @@ class Searcher:
         if self._model is not None:
             for term in query_as_list:
                 # query expansion
-                similar_terms += set(self._model.get_similar_words(term))  # list
+                try:
+                    similar_terms += set(self._model.get_similar_words(term))  # list
+                except AttributeError:
+                    print("Failed query expansion")
+                    break
         query_as_list = set(query_as_list + similar_terms)
         for new_term in query_as_list:
             try:
