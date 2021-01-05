@@ -9,7 +9,7 @@ class Indexer:
     # You can change the internal implementation as you see fit.
     def __init__(self, config):
         self.curr_idx=0
-        self.term_indexer_dict={} # key = term, value = [number_of_docs(df), docs_list=[doc_id, tf] ,last_doc_idx]
+        self.term_indexer_dict={} # key = term, value = [number_of_docs(df), docs_list=[doc_id, tf]]
         self.file_indexer_dict={} # key = doc_idx, value = { key = term, value = tf}
         self.config = config
         #self.output_path = output_path
@@ -32,7 +32,7 @@ class Indexer:
         document_dictionary = document.term_doc_dictionary  # term_dict
         if len(document_dictionary) == 0:
             return
-        unique_terms_in_doc = self.count_unique(document_dictionary)
+        #unique_terms_in_doc = self.count_unique(document_dictionary)
         max_tf = max(document_dictionary.values())
         # Go over each term in the doc
         for term in document_dictionary.keys():
@@ -49,16 +49,14 @@ class Indexer:
         if term in self.term_indexer_dict.keys():
             number_of_docs = self.term_indexer_dict[term][0] + 1
             docs_list = self.term_indexer_dict[term][1]
-            last_doc_idx = self.term_indexer_dict[term][2]
         else:
             number_of_docs = 1
             docs_list = []
-            last_doc_idx = doc_idx
 
         docs_list.append([doc_idx, tf])
 
-        self.term_indexer_dict[term] = [number_of_docs, self.differnce_method(docs_list, last_doc_idx),
-                                        doc_idx]
+        self.term_indexer_dict[term] = [number_of_docs, docs_list]
+
 
     def insert_file_to_inv_idx(self, term, tf):
 
@@ -159,4 +157,4 @@ class Indexer:
         """
         Return the posting list from the index for a term.
         """
-        return self.postingDict[term] if self._is_term_exist(term) else []
+        return self.term_indexer_dict[term][1] if self._is_term_exist(term) else []

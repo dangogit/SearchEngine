@@ -20,20 +20,24 @@ class Ranker:
         try:
             for doc_id in doc_id_list:
                 mechane1 = 0
-                for term in file_indexer_dict[doc_id].keys():
-                    if term not in query_as_list:
-                        if term not in final_dict.keys():
-                            if term.lower() in final_dict.keys():
-                                term = term.lower()
-                            elif term.upper() in final_dict.keys():
-                                term = term.upper()
+                try:
+                    for term in file_indexer_dict[doc_id].keys():
+                        if term not in query_as_list:
+                            if term not in final_dict.keys():
 
-                        if term in final_dict.keys():
-                            list_of_appernces_in_corpus = final_dict[term]
-                            for tmp_list in list_of_appernces_in_corpus:  # run on all list of the term
-                                if tmp_list[2] == doc_id:  # if this is the document we are looking at right now
-                                    Wij = float(tmp_list[0]) * float(tmp_list[1])  # tf*idf
-                                    mechane1+=(Wij**2)
+                                if term.lower() in final_dict.keys():
+                                    term = term.lower()
+                                elif term.upper() in final_dict.keys():
+                                    term = term.upper()
+
+                            if term in final_dict.keys():
+                                list_of_appernces_in_corpus = final_dict[term]
+                                for tmp_list in list_of_appernces_in_corpus:  # run on all list of the term
+                                    if tmp_list[2] == doc_id:  # if this is the document we are looking at right now
+                                        Wij = float(tmp_list[0]) * float(tmp_list[1])  # tf*idf
+                                        mechane1+=(Wij**2)
+                except :
+                    traceback.print_exc()
                 mone = 0
                 mechane2 = 0
                 for term in query_as_list:

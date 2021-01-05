@@ -104,7 +104,7 @@ def main(corpus_path, output_path, stemming, queries, num_docs_to_retrieve):
     output_path += '\\'
     total_num_of_docs, p = run_engine(corpus_path, output_path, stemming)
     #print("total number of docs " + str(total_num_of_docs))
-    search_and_rank_query(p, output_path, queries, num_docs_to_retrieve, total_num_of_docs)
+    search_and_rank_query(p, queries, num_docs_to_retrieve, total_num_of_docs)
 
 
 #def load_index():
@@ -112,7 +112,7 @@ def main(corpus_path, output_path, stemming, queries, num_docs_to_retrieve):
 #    return utils.load_inverted_index()
 
 
-def search_and_rank_query(p, output_path, queries, k, total_num_of_docs):
+def search_and_rank_query(p, queries, k, total_num_of_docs):
     searcher = Searcher()
     queries_list = []
     if isinstance(queries, list):
@@ -130,7 +130,8 @@ def search_and_rank_query(p, output_path, queries, k, total_num_of_docs):
         if len(query) <= 1:
             continue
         query_as_list = query.split()
-        final_dict, doc_id_list, file_indexer_dict = searcher.relevant_docs_from_posting(output_path, query_as_list, total_num_of_docs)
+
+        final_dict, doc_id_list, file_indexer_dict = searcher._relevant_docs_from_posting(query_as_list, total_num_of_docs)
         ranked_docs_list, ranked_docs_dict = searcher.ranker.rank_relevant_doc(final_dict, doc_id_list,
                                                                                query_as_list, file_indexer_dict)
         ranked_docs_list_top_k = searcher.ranker.retrieve_top_k(ranked_docs_list, k)

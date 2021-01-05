@@ -22,6 +22,7 @@ class Searcher:
         self._ranker = Ranker()
         self._model = model
         self.terms_searched={}
+        self.total_num_of_docs = parser.curr_idx
 
     ###############################################################################################
     #
@@ -53,7 +54,7 @@ class Searcher:
 
 
     # N= total amount of document in the corpus
-    def relevant_docs_from_posting(self, output_path, query_as_list, total_num_of_docs):
+    def _relevant_docs_from_posting(self, query_as_list, total_num_of_docs):
         """
         This function loads the posting list and count the amount of relevant documents per term.
         :param query_as_list: query
@@ -79,10 +80,18 @@ class Searcher:
 
 
                 if new_term in self._indexer.term_indexer_dict.keys():
-                    terms_idf[new_term] = math.log2(float(total_num_of_docs)/float(self._indexer.term_indexer_dict[new_term][0]))
-                    docs_list = self.revocer_doc_ids(self._indexer.term_indexer_dict[new_term][1])  # fix difference method
+                    df = self._indexer.term_indexer_dict[new_term][0]
+                    if df != 0:
+                        terms_idf[new_term] = math.log2(float(total_num_of_docs)/float(df))
+
+                    else:
+                        terms_idf[new_term] = 0
+
+                    #docs_list = self.revocer_doc_ids(self._indexer.term_indexer_dict[new_term][1])  # fix difference method
+                    docs_list=self._indexer.term_indexer_dict[new_term][1]
                     doc_id_dict.update(dict(docs_list))
                     self.terms_searched[new_term] = dict(docs_list)
+
             except:
                 traceback.print_exc()
 
@@ -103,15 +112,15 @@ class Searcher:
         except:
             traceback.print_exc()
 
-            for doc_id in doc_id_list:
-                for term in self._indexer.file_indexer_dict[doc_id].keys():
-                    if term not in self.terms_searched.keys():
-                        tf = self._indexer.file_indexer_dict[doc_id]
-                        df = math.log2(float(total_num_of_docs) / float(self._indexer.term_indexer_dict[term][0]))
-                        if term not in final_dict.keys():
-                            final_dict[term] = [[tf, df, doc_id]]
-                        else:
-                            final_dict[term].append([tf, df, doc_id])
+        for doc_id in doc_id_list:
+            for term in self._indexer.file_indexer_dict[doc_id].keys():
+               # if term not in self.terms_searched.keys():
+                tf = self._indexer.file_indexer_dict[doc_id][term]
+                df = math.log2(float(total_num_of_docs) / float(self._indexer.term_indexer_dict[term][0]))
+                if term not in final_dict.keys():
+                    final_dict[term] = [[tf, df, doc_id]]
+                else:
+                    final_dict[term].append([tf, df, doc_id])
 
         return final_dict, doc_id_list, self._indexer.file_indexer_dict
 
@@ -135,16 +144,22 @@ class Searcher:
         """
         query_as_list = self._parser.parse_sentence(query)
 
-        relevant_docs = self._relevant_docs_from_posting(query_as_list)
-        n_relevant = len(relevant_docs)
-        ranked_doc_ids = Ranker.rank_relevant_docs(relevant_docs)
-        return n_relevant, ranked_doc_ids
+        final_dict, doc_id_list, file_indexer_dict = self._relevant_docs_from_posting(query_as_list, self.total_num_of_docs)
+
+        ranked_docs_list, ranked_docs_dict = self._ranker.rank_relevant_doc(final_dict, doc_id_list,query_as_list, file_indexer_dict)
+        #results_dict = {self._parser.doc_idx_tweet_id[k]: ranked_docs_dict[k] for k in ranked_docs_list}
+
+        ranked_docs_list_top_k = self._ranker.retrieve_top_k(ranked_docs_list, k)
+        results_list_top_k = [self._parser.doc_idx_tweet_id[key] for key in ranked_docs_list_top_k]
+
+
+        return len(ranked_docs_list), results_list_top_k
 
 
 
     # feel free to change the signature and/or implementation of this function 
     # or drop altogether.
-    def _relevant_docs_from_posting(self, query_as_list):
+    def relevant_docs_from_posting(self, query_as_list):
         """
         This function loads the posting list and count the amount of relevant documents per term.
         :param query_as_list: parsed query tokens
