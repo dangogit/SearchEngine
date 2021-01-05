@@ -1,13 +1,14 @@
 import math
 import traceback
+#a
 
-
+#asdasd
 class Ranker:
     def __init__(self):
         pass
 
     @staticmethod
-    def rank_relevant_doc(final_dict, doc_id_list, query_as_list):
+    def rank_relevant_doc(final_dict, doc_id_list, query_as_list, file_indexer_dict):
         final_docs_ranking = {}  # list of tuples: (doc_id,rank with this query)
         # need to run on all documents recived here, give them a score, and sort them
         """
@@ -17,29 +18,42 @@ class Ranker:
         @:return: sorted list of documents by score
         """
         try:
-        # cosine simularity using tf-idf
-            query_size = len(query_as_list)
             for doc_id in doc_id_list:
-                mone = 0
                 mechane1 = 0
+                for term in file_indexer_dict[doc_id].keys():
+                    if term not in query_as_list:
+                        if term not in final_dict.keys():
+                            if term.lower() in final_dict.keys():
+                                term = term.lower()
+                            elif term.upper() in final_dict.keys():
+                                term = term.upper()
+
+                        if term in final_dict.keys():
+                            list_of_appernces_in_corpus = final_dict[term]
+                            for tmp_list in list_of_appernces_in_corpus:  # run on all list of the term
+                                if tmp_list[2] == doc_id:  # if this is the document we are looking at right now
+                                    Wij = float(tmp_list[0]) * float(tmp_list[1])  # tf*idf
+                                    mechane1+=(Wij**2)
+                mone = 0
                 mechane2 = 0
                 for term in query_as_list:
-                    num_of_apprences_in_query = query_as_list.count(term)
-                    Wiq = float(num_of_apprences_in_query)
-
                     if term not in final_dict.keys():
                         if term.lower() in final_dict.keys():
                             term = term.lower()
                         elif term.upper() in final_dict.keys():
                             term = term.upper()
+
+                    num_of_apprences_in_query = query_as_list.count(term)
+                    Wiq = float(num_of_apprences_in_query)
+
                     if term in final_dict.keys():
                         list_of_appernces_in_corpus = final_dict[term]
                         for tmp_list in list_of_appernces_in_corpus:  # run on all list of the term
                             if tmp_list[2] == doc_id:  # if this is the document we are looking at right now
                                 Wij = float(tmp_list[0]) * float(tmp_list[1])  # tf*idf
                                 mone += float(Wij * Wiq)
-                                mechane1 += float(Wij ** 2)
                                 mechane2 += float(Wiq ** 2)
+                                mechane1 += (Wij ** 2)
                     else:
                         mechane2 += float(Wiq ** 2)
                 mechane = math.sqrt(mechane1 * mechane2)
