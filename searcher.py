@@ -54,17 +54,13 @@ class Searcher:
 
     # N= total amount of document in the corpus
     def relevant_docs_from_posting(self, output_path, query_as_list, total_num_of_docs):
-        # query is list
         """
         This function loads the posting list and count the amount of relevant documents per term.
         :param query_as_list: query
         :return: dictionary of relevant documents.
         """
         relevant_docs = []
-        # dictionary that will be passed to the ranker in the following form:
-        # tf_idf_dict={term:[[doc_id,num of appearnces in this doc],...],term:[[]],idf}
         tf_idf_dict = {}
-
         terms_idf = {}
         similar_terms = []
         doc_id_dict = {}
@@ -73,7 +69,6 @@ class Searcher:
             # query expansion
             similar_terms += set(self.get_similar_words(term))  # list
         query_as_list = set(query_as_list + similar_terms)
-        total_id_dict_list = []  # lists that holds all suspuicous id's and then find the common
         for new_term in query_as_list:
             try:
                 if new_term not in self._indexer.term_indexer_dict.keys():
@@ -85,20 +80,9 @@ class Searcher:
 
                 if new_term in self._indexer.term_indexer_dict.keys():
                     terms_idf[new_term] = math.log2(float(total_num_of_docs)/float(self._indexer.term_indexer_dict[new_term][0]))
-                    # recover doc_id
-                    # inverted_index[1]=[[doc id,tf],[doc_id,tf]...]
                     docs_list = self.revocer_doc_ids(self._indexer.term_indexer_dict[new_term][1])  # fix difference method
-                    # now dictionary
-                    # sort by tf
-                    #sorted_docs_list = sorted(docs_list, key=lambda x: float(x[1]), reverse=True)
-                    # get 2000 best results
-                    #best_2000_docs = sorted_docs_list[:2000]
                     doc_id_dict.update(dict(docs_list))
                     self.terms_searched[new_term] = dict(docs_list)
-                    # get seperate doc_id list
-                    # doc_id_list = [item[0] for item in inverted_index[new_term][1]]
-                    # [[dict_1,tf1],[dict2,tf2]...]
-                  #  total_id_dict_list.append([inverted_index[new_term][1], inverted_index[new_term][0]])
             except:
                 traceback.print_exc()
 
@@ -131,12 +115,10 @@ class Searcher:
 
         return final_dict, doc_id_list, self._indexer.file_indexer_dict
 
+    # asdasd
+    # a
 
     ######################################################################################################################################
-
-
-
-
     # DO NOT MODIFY THIS SIGNATURE
     # You can change the internal implementation as you see fit.
     def search(self, query, k=None):
