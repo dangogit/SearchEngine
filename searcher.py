@@ -84,7 +84,7 @@ class Searcher:
                 if new_term in self._indexer.term_indexer_dict.keys():
                     terms_idf[new_term] = math.log2(float(total_num_of_docs)/float(self._indexer.term_indexer_dict[new_term][0]))
                     # recover doc_id
-                    # inverted_index[1]=[[doc id,tf],[doc_id,tf]...]
+                    # inverted_index[1]=[doc id, doc_id...]
                     docs_list = self.revocer_doc_ids(self._indexer.term_indexer_dict[new_term][1])  # fix difference method
                     # now dictionary
                     # sort by tf
