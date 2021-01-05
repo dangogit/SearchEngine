@@ -28,20 +28,6 @@ class Searcher:
     #
     #ours
     # the big matrix is the base for the functions
-    def get_similar_words(self, term):
-        synomus = []
-        try:
-            count = 0
-            for syns in wordnet.synsets(term):
-                for l in syns.lemmas():
-                    if (l.name() != term and count < 2 and l.name not in synomus):
-                        synomus.append(l.name())
-                        count += 1
-                    elif count >= 2:
-                        return synomus
-        except:
-            pass
-        return synomus
 
     # return list of list
 
@@ -60,15 +46,15 @@ class Searcher:
         :param query_as_list: query
         :return: dictionary of relevant documents.
         """
-        relevant_docs = []
-        tf_idf_dict = {}
         terms_idf = {}
         similar_terms = []
         doc_id_dict = {}
         query_as_list = self._parser.parse_all_text(' '.join(query_as_list).lower())  #
-        for term in query_as_list:
-            # query expansion
-            similar_terms += set(self.get_similar_words(term))  # list
+
+        if self._model is not None:
+            for term in query_as_list:
+                # query expansion
+                similar_terms += set(self._model.get_similar_words(term))  # list
         query_as_list = set(query_as_list + similar_terms)
         for new_term in query_as_list:
             try:
@@ -87,7 +73,6 @@ class Searcher:
                     else:
                         terms_idf[new_term] = 0
 
-                    #docs_list = self.revocer_doc_ids(self._indexer.term_indexer_dict[new_term][1])  # fix difference method
                     docs_list=self._indexer.term_indexer_dict[new_term][1]
                     doc_id_dict.update(dict(docs_list))
                     self.terms_searched[new_term] = dict(docs_list)
@@ -123,9 +108,6 @@ class Searcher:
                     final_dict[term].append([tf, df, doc_id])
 
         return final_dict, doc_id_list, self._indexer.file_indexer_dict
-
-    # asdasd
-    # a
 
     ######################################################################################################################################
     # DO NOT MODIFY THIS SIGNATURE
