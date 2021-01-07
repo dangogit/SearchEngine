@@ -9,8 +9,8 @@ class Indexer:
     # You can change the internal implementation as you see fit.
     def __init__(self, config):
         self.curr_idx=0
-        self.term_indexer_dict={} # key = term, value = [number_of_docs(df), docs_list=[doc_id, tf]]
         self.file_indexer_dict={} # key = doc_idx, value = { key = term, value = tf}
+        self.term_indexer_dict = {}
         self.config = config
         #self.output_path = output_path
         #self.words_dict = p.word_set
@@ -41,7 +41,7 @@ class Indexer:
                 freq_in_doc = document_dictionary[term]
                 tf = float(freq_in_doc) / float(max_tf)
                 self.insert_term_to_inv_idx(term, self.curr_idx, tf)
-                self.insert_file_to_inv_idx(term,tf)
+                self.insert_file_to_inv_idx(term, tf)
             except:
                 traceback.print_exc()
 

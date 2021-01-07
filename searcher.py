@@ -1,10 +1,6 @@
 import json
 import math
 import traceback
-
-from nltk.corpus import wordnet
-
-from parser_module import Parse
 from ranker import Ranker
 
 import utils
@@ -52,14 +48,26 @@ class Searcher:
         query_as_list = self._parser.parse_all_text(' '.join(query_as_list).lower())  #
 
         if self._model is not None:
-            for term in query_as_list:
-                # query expansion
-                try:
-                    similar_terms += set(self._model.get_similar_words(term))  # list
-                except AttributeError:
-                    print("Failed query expansion")
-                    break
-        query_as_list = set(query_as_list + similar_terms)
+            try:
+                query_as_list = self._model.improve_query(query_as_list)
+            except AttributeError:
+                print("Failed query expansion")
+                pass
+
+       #     for term in query_as_list:
+       #         # query expansion
+       #         try:
+       #             similar_terms.extend(self._model.get_similar_words(term)) # list
+       #
+       #         except AttributeError:
+       #             print("Failed query expansion")
+       #             break
+       # if len(similar_terms) > 1:
+       #     try:
+       #         query_as_list = set(query_as_list.extend(similar_terms))
+       #     except TypeError:
+       #         pass
+
         for new_term in query_as_list:
             try:
                 if new_term not in self._indexer.term_indexer_dict.keys():

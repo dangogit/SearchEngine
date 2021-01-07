@@ -1,3 +1,5 @@
+import json
+
 import pandas as pd
 from parser_module import Parse
 from indexer import Indexer
@@ -42,6 +44,7 @@ class SearchEngine:
             self._indexer.set_idx(idx)
             self._indexer.add_new_doc(parsed_document)
             idx += 1
+
         return idx-1
 
     # DO NOT MODIFY THIS SIGNATURE

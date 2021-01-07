@@ -1,9 +1,9 @@
 import pandas as pd
+
+from _SpellCheck import _SpellCheck
 from parser_module import Parse
 from indexer import Indexer
 from searcher import Searcher
-from Word2Vec import Word2Vec
-
 
 # DO NOT CHANGE THE CLASS NAME
 class SearchEngine:
@@ -63,7 +63,7 @@ class SearchEngine:
         This is where you would load models like word2vec, LSI, LDA, etc. and
         assign to self._model, which is passed on to the searcher at query time.
         """
-        self._model = Word2Vec()
+        self._model = _SpellCheck()
 
     # DO NOT MODIFY THIS SIGNATURE
     # You can change the internal implementation as you see fit.

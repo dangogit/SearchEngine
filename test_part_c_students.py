@@ -83,7 +83,7 @@ if __name__ == '__main__':
                 logging.error('model.zip file does not exists.')
 
         # test for each search engine module
-        engine_modules = ['search_engine_' + name for name in ['1', '2', '3', 'best']]
+        engine_modules = ['search_engine_' + name for name in ['6']]
         for engine_module in engine_modules:
             try:
                 # does the module file exist?
@@ -141,6 +141,17 @@ if __name__ == '__main__':
                         if q_time > 10:
                             logging.error(f"Query {q_id} with keywords '{q_keywords}' took more than 10 seconds.")
                 queries_results = pd.DataFrame(queries_results, columns=['query', 'tweet'])
+                print("first 5 results for query number 1:")
+                print(queries_results.loc[queries_results['query'] ==1,'tweet'].iloc[:5])
+                print("first 5 results for query number 2:")
+                print(queries_results.loc[queries_results['query'] ==2,'tweet'].iloc[:5])
+                print("first 5 results for query number 4:")
+                print(queries_results.loc[queries_results['query'] == 4, 'tweet'].iloc[:5])
+                print("first 5 results for query number 7:")
+                print(queries_results.loc[queries_results['query'] == 7, 'tweet'].iloc[:5])
+                print("first 5 results for query number 8:")
+                print(queries_results.loc[queries_results['query'] == 8, 'tweet'].iloc[:5])
+
 
                 # merge query results with labels benchmark
                 q_results_labeled = None

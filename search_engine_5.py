@@ -1,9 +1,11 @@
 import pandas as pd
+
+from Glove import Glove
+from PyDict import PyDict
 from parser_module import Parse
 from indexer import Indexer
 from searcher import Searcher
-from Word2Vec import Word2Vec
-
+from Thesaurus import _Thesaurus
 
 # DO NOT CHANGE THE CLASS NAME
 class SearchEngine:
@@ -63,7 +65,7 @@ class SearchEngine:
         This is where you would load models like word2vec, LSI, LDA, etc. and
         assign to self._model, which is passed on to the searcher at query time.
         """
-        self._model = Word2Vec()
+        self._model = PyDict()
 
     # DO NOT MODIFY THIS SIGNATURE
     # You can change the internal implementation as you see fit.
