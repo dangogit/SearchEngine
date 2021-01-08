@@ -1,6 +1,8 @@
 import json
 import math
 import traceback
+
+from _SpellCheck import _SpellChecker
 from ranker import Ranker
 
 import utils
@@ -48,11 +50,21 @@ class Searcher:
         query_as_list = self._parser.parse_all_text(' '.join(query_as_list).lower())  #
 
         if self._model is not None:
-            try:
-                query_as_list = self._model.improve_query(query_as_list)
-            except AttributeError:
-                print("Failed query expansion")
-                pass
+            if isinstance(self._model,list):
+                query_as_list_to_extend = []
+                for model in self._model:
+                    if model is _SpellChecker():
+                        query_as_list = model.improve_query(query_as_list)
+                    else:
+                        query_as_list_to_extend.extend(model.improve_query(query_as_list))
+                query_as_list = set(query_as_list_to_extend)
+
+            else:
+                try:
+                    query_as_list = self._model.improve_query(query_as_list)
+                except AttributeError:
+                    print("Failed query expansion")
+                    pass
 
        #     for term in query_as_list:
        #         # query expansion

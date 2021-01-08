@@ -3,13 +3,16 @@ class Word2Vec:
 
     def __init__(self):
         self.model = gensim.models.KeyedVectors.load_word2vec_format('GoogleNews-vectors-negative300.bin', binary=True,encoding='utf-8')
-
+        self.terms_dict = {}
 
     def get_similar_words(self, term):
+        if term in self.terms_dict.keys():
+            return self.terms_dict[term]
         synomus = []
         try:
-           synomus_mat = self.model.most_similar(term, topn=3)
+           synomus_mat = self.model.most_similar(term, topn=2)
            synomus = [synomus_mat[0][0], synomus_mat[1][0]]
+           self.terms_dict[term] = synomus
         except:
             pass
         return synomus
@@ -23,4 +26,4 @@ class Word2Vec:
         for term in query:
             results.append(term)
             results.extend(self.get_similar_words(term))
-        return set(results)
+        return results

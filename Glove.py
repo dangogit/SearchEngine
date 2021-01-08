@@ -2,25 +2,27 @@ import traceback
 
 from gensim.scripts.glove2word2vec import glove2word2vec
 from gensim.models import KeyedVectors
-from parser_module import Parse
+
 
 
 class Glove:
 
     def __init__(self):
-        self.input_file = r"C:\Users\Daniel\PycharmProjects\glove.twitter.27B.200d.txt"
-        self.output_file = 'glove.twitter.27B.25d.txt.word2vec'
-        glove2word2vec(self.input_file, self.output_file)
-        self.model = KeyedVectors.load_word2vec_format(self.output_file, binary=False)
+        glove2word2vec('glove.twitter.27B.25d.txt', 'glove.twitter.27B.25d.txt.word2vec')
+        self.model = KeyedVectors.load_word2vec_format('glove.twitter.27B.25d.txt.word2vec', binary=False)
+        self.terms_dict = {}
 
-    def get_similiar_words(self, term):
-        if term == None:
-            return None
+    def get_similar_words(self, term):
+        if term in self.terms_dict.keys():
+            return self.terms_dict[term]
+        synomus = []
         try:
-            res = [self.model.most_similar(term)[0][0], self.model.most_similar(term)[1][0]]
+           synomus_mat = self.model.most_similar(term)
+           synomus = [synomus_mat[0][0], synomus_mat[1][0]]
+           self.terms_dict[term] = synomus
         except:
-            traceback.print_exc()
-        return res
+            pass
+        return synomus
 
     def improve_query(self, query):
         results = []
@@ -31,4 +33,4 @@ class Glove:
         for term in query:
             results.append(term)
             results.extend(self.get_similar_words(term))
-        return set(results)
+        return results

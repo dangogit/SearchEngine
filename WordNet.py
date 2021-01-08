@@ -31,4 +31,4 @@ class WordNet:
         for term in query:
             results.append(term)
             results.extend(self.get_similar_words(term))
-        return set(results)
+        return results

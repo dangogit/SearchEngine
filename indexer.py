@@ -126,7 +126,7 @@ class Indexer:
         try:
             with open(fn, 'rb') as index_file:
                 data = pickle.load(index_file)
-                #data=[self.term_indexer_dict,self.file_indexer_dict]
+                #data=(self.term_indexer_dict,self.file_indexer_dict)
         except:
             traceback.print_exc()
         return data
@@ -141,7 +141,7 @@ class Indexer:
               fn - file name of pickled index.
         """
         with open(fn,'wb') as folder:
-            pickle.dump([self.term_indexer_dict,self.file_indexer_dict], folder)
+            pickle.dump((self.term_indexer_dict,self.file_indexer_dict), folder)
 
     # feel free to change the signature and/or implementation of this function 
     # or drop altogether.

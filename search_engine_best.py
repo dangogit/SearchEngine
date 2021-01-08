@@ -1,11 +1,16 @@
 import pandas as pd
+
+from Glove import Glove
+from Thesaurus import _Thesaurus
+from Word2Vec import Word2Vec
+from WordNet import WordNet
+from _SpellCheck import _SpellChecker
 from reader import ReadFile
 from configuration import ConfigClass
 from parser_module import Parse
 from indexer import Indexer
 from searcher import Searcher
 import utils
-
 
 # DO NOT CHANGE THE CLASS NAME
 class SearchEngine:
@@ -32,33 +37,21 @@ class SearchEngine:
         documents_list = df.values.tolist()
         # Iterate over every document in the file
         self._parser.curr_idx = self.parse_and_index_tweet_list(documents_list, 0)
-        #for idx, document in enumerate(documents_list):
-            # parse the document
-
-            # theirs:
-            #parsed_document = self._parser.parse_doc(document)
-            #number_of_documents += 1
-            # index the document data
-            #self._indexer.add_new_doc(parsed_document)
+        self._indexer.save_index('idx_bench.pkl')
         print('Finished parsing and indexing.')
 
     def parse_and_index_tweet_list(self, documents_list, idx):
-        # print("[" + str(datetime.now()) + "] " + "Parsing and Indexing documents in file: " + filename + " " + str(
-        #    sys.getsizeof(tweet_list) / 1000000) + "mb")
-        # d1 = datetime.strptime(datetime.now().strftime(fmt), fmt)
-        # d1_ts = time.mktime(d1.timetuple())
 
         for document in documents_list:
             # parse the document
             self._parser.curr_idx = idx
             parsed_document = self._parser.parse_doc(document)
-            # parsed_tweets[idx] = parsed_document
             # add the doucment to indexer here
             self._indexer.set_idx(idx)
             self._indexer.add_new_doc(parsed_document)
             idx += 1
-        return idx-1
 
+        return idx-1
     # DO NOT MODIFY THIS SIGNATURE
     # You can change the internal implementation as you see fit.
     def load_index(self, fn):
@@ -77,7 +70,7 @@ class SearchEngine:
         This is where you would load models like word2vec, LSI, LDA, etc. and
         assign to self._model, which is passed on to the searcher at query time.
         """
-        pass
+        self._model = [_Thesaurus(), Word2Vec()]
 
     # DO NOT MODIFY THIS SIGNATURE
     # You can change the internal implementation as you see fit.

@@ -31,7 +31,7 @@ class SearchEngine:
         documents_list = df.values.tolist()
         # Iterate over every document in the file
         self._parser.curr_idx = self.parse_and_index_tweet_list(documents_list, 0)
-
+        self._indexer.save_index('idx_bench.pkl')
         print('Finished parsing and indexing.')
 
     def parse_and_index_tweet_list(self, documents_list, idx):

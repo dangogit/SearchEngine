@@ -83,7 +83,7 @@ if __name__ == '__main__':
                 logging.error('model.zip file does not exists.')
 
         # test for each search engine module
-        engine_modules = ['search_engine_' + name for name in ['6']]
+        engine_modules = ['search_engine_' + name for name in ['best']]
         for engine_module in engine_modules:
             try:
                 # does the module file exist?
@@ -122,6 +122,8 @@ if __name__ == '__main__':
                 if queries is not None:
                     for i, row in queries.iterrows():
                         q_id = row['query_id']
+                        ## for testing each query:
+                        #if q_id == 8:
                         q_keywords = row['keywords']
                         start_time = time.time()
                         q_n_res, q_res = engine.search(q_keywords)
@@ -142,9 +144,9 @@ if __name__ == '__main__':
                             logging.error(f"Query {q_id} with keywords '{q_keywords}' took more than 10 seconds.")
                 queries_results = pd.DataFrame(queries_results, columns=['query', 'tweet'])
                 print("first 5 results for query number 1:")
-                print(queries_results.loc[queries_results['query'] ==1,'tweet'].iloc[:5])
+                print(queries_results.loc[queries_results['query'] == 1, 'tweet'].iloc[:5])
                 print("first 5 results for query number 2:")
-                print(queries_results.loc[queries_results['query'] ==2,'tweet'].iloc[:5])
+                print(queries_results.loc[queries_results['query'] == 2, 'tweet'].iloc[:5])
                 print("first 5 results for query number 4:")
                 print(queries_results.loc[queries_results['query'] == 4, 'tweet'].iloc[:5])
                 print("first 5 results for query number 7:")
@@ -152,6 +154,11 @@ if __name__ == '__main__':
                 print("first 5 results for query number 8:")
                 print(queries_results.loc[queries_results['query'] == 8, 'tweet'].iloc[:5])
 
+                ## for testing each query:
+                #queries_test = queries_results[queries_results['query'] == 8]
+                #bench_lbls_test = bench_lbls[bench_lbls['query'] == 8]
+                #q2n_relevant_test = {k: q2n_relevant[k] for k in [8]}
+                ##
 
                 # merge query results with labels benchmark
                 q_results_labeled = None

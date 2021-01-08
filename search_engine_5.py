@@ -1,11 +1,9 @@
 import pandas as pd
 
-from Glove import Glove
-from PyDict import PyDict
+from _SpellCheck import _SpellChecker
 from parser_module import Parse
 from indexer import Indexer
 from searcher import Searcher
-from Thesaurus import _Thesaurus
 
 # DO NOT CHANGE THE CLASS NAME
 class SearchEngine:
@@ -32,7 +30,7 @@ class SearchEngine:
         documents_list = df.values.tolist()
         # Iterate over every document in the file
         self._parser.curr_idx = self.parse_and_index_tweet_list(documents_list, 0)
-
+        self._indexer.save_index('idx_bench.pkl')
         print('Finished parsing and indexing.')
 
     def parse_and_index_tweet_list(self, documents_list, idx):
@@ -65,7 +63,7 @@ class SearchEngine:
         This is where you would load models like word2vec, LSI, LDA, etc. and
         assign to self._model, which is passed on to the searcher at query time.
         """
-        self._model = PyDict()
+        self._model = _SpellChecker()
 
     # DO NOT MODIFY THIS SIGNATURE
     # You can change the internal implementation as you see fit.

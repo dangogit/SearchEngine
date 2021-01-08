@@ -5,6 +5,8 @@ from nltk.tokenize import word_tokenize
 from document import Document
 import re
 
+from stemmer import Stemmer
+
 
 class Parse:
 
