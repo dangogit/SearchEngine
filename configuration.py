@@ -10,11 +10,14 @@ class ConfigClass:
         # model file with every submission.
         self._download_model = False
 
-        self.corpusPath = r"C:\Users\dorle\PycharmProjects\IRpart3\Search_Engine\data"
-        self.savedFileMainFolder = r"C:\Users\dorle\PycharmProjects\IRpart3\Search_Engine"
+        self.corpusPath = r"C:\Users\Daniel\PycharmProjects\Search_Engine\data"
+        self.savedFileMainFolder = r"C:\Users\Daniel\PycharmProjects\Search_Engine"
         self.saveFilesWithStem = self.savedFileMainFolder + "\WithStem"
         self.saveFilesWithoutStem = self.savedFileMainFolder + "\WithoutStem"
         self.toStem = False
+        self.google_news_vectors_negative300_path = '../../../../GoogleNews-vectors-negative300.bin'
+        self.glove_twitter_27B_25d_path = '../../../../glove.twitter.27B.25d.txt'
+        self.glove_twiter_file=r"C:\Users\Daniel\PycharmProjects\glove.twitter.27B.200d.txt"  #should be server address when uploading
 
         print('Project was created successfully..')
 

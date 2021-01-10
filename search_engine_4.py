@@ -1,6 +1,7 @@
 import pandas as pd
 
 from Glove import Glove
+from WordNet import WordNet
 from parser_module import Parse
 from indexer import Indexer
 from searcher import Searcher
@@ -64,7 +65,7 @@ class SearchEngine:
         This is where you would load models like word2vec, LSI, LDA, etc. and
         assign to self._model, which is passed on to the searcher at query time.
         """
-        self._model = _Thesaurus()
+        self._model = WordNet()
 
     # DO NOT MODIFY THIS SIGNATURE
     # You can change the internal implementation as you see fit.
