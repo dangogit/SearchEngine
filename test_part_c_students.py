@@ -66,8 +66,7 @@ if __name__ == '__main__':
         import configuration
 
         config = configuration.ConfigClass()
-
-        # do we need to download a pretrained model?
+            # do we need to download a pretrained model?
         model_url = config.get_model_url()
         if model_url is not None and config.get_download_model():
             import utils
@@ -82,8 +81,8 @@ if __name__ == '__main__':
             else:
                 logging.error('model.zip file does not exists.')
 
-        # test for each search engine module
-        engine_modules = ['search_engine_' + name for name in ['best']]
+            # test for each search engine module
+        engine_modules = ['search_engine_' + name for name in ['2']]
         for engine_module in engine_modules:
             try:
                 # does the module file exist?
@@ -117,98 +116,105 @@ if __name__ == '__main__':
                         logging.error("the query 'bioweapon' returned results that are not valid tweet ids: " + str(
                             invalid_tweet_ids[:10]))
 
-                # run multiple queries and test that no query takes > 10 seconds
-                queries_results = []
-                if queries is not None:
-                    for i, row in queries.iterrows():
-                        q_id = row['query_id']
-                        ## for testing each query:
-                        #if q_id == 8:
-                        q_keywords = row['keywords']
-                        start_time = time.time()
-                        q_n_res, q_res = engine.search(q_keywords)
-                        end_time = time.time()
-                        q_time = end_time - start_time
-                        if q_n_res is None or q_res is None or q_n_res < 1 or len(q_res) < 1:
-                            logging.error(f"Query {q_id} with keywords '{q_keywords}' returned no results.")
-                        else:
-                            logging.debug(
-                                f"{engine_module} successfully returned {q_n_res} results for query number {q_id}.")
-                            invalid_tweet_ids = [doc_id for doc_id in q_res if invalid_tweet_id(doc_id)]
-                            if len(invalid_tweet_ids) > 0:
-                                logging.error(f"Query  {q_id} returned results that are not valid tweet ids: " + str(
-                                    invalid_tweet_ids[:10]))
-                            queries_results.extend(
-                                [(q_id, str(doc_id)) for doc_id in q_res if not invalid_tweet_id(doc_id)])
-                        if q_time > 10:
-                            logging.error(f"Query {q_id} with keywords '{q_keywords}' took more than 10 seconds.")
-                queries_results = pd.DataFrame(queries_results, columns=['query', 'tweet'])
-                print("first 5 results for query number 1:")
-                print(queries_results.loc[queries_results['query'] == 1, 'tweet'].iloc[:5])
-                print("first 5 results for query number 2:")
-                print(queries_results.loc[queries_results['query'] == 2, 'tweet'].iloc[:5])
-                print("first 5 results for query number 4:")
-                print(queries_results.loc[queries_results['query'] == 4, 'tweet'].iloc[:5])
-                print("first 5 results for query number 7:")
-                print(queries_results.loc[queries_results['query'] == 7, 'tweet'].iloc[:5])
-                print("first 5 results for query number 8:")
-                print(queries_results.loc[queries_results['query'] == 8, 'tweet'].iloc[:5])
+                bench_lbls_all = bench_lbls
+                queries_all = queries
+                q2n_relevant_all = q2n_relevant
 
-                ## for testing each query:
-                #queries_test = queries_results[queries_results['query'] == 8]
-                #bench_lbls_test = bench_lbls[bench_lbls['query'] == 8]
-                #q2n_relevant_test = {k: q2n_relevant[k] for k in [8]}
-                ##
+                for j in range(1, 36):
+                    bench_lbls = bench_lbls_all[bench_lbls_all['query'] == j]
+                    queries = queries_all[queries_all['query_id'] == j]
+                    q2n_relevant = {j: q2n_relevant_all[j]}
+                    queries_results = []
+                    if queries is not None:
+                        for i, row in queries.iterrows():
+                            q_id = row['query_id']
+                            ## for testing each query:
+                            #if q_id == 8:
+                            q_keywords = row['keywords']
+                            start_time = time.time()
+                            q_n_res, q_res = engine.search(q_keywords)
+                            end_time = time.time()
+                            q_time = end_time - start_time
+                            if q_n_res is None or q_res is None or q_n_res < 1 or len(q_res) < 1:
+                                logging.error(f"Query {q_id} with keywords '{q_keywords}' returned no results.")
+                            else:
+                                logging.debug(
+                                    f"{engine_module} successfully returned {q_n_res} results for query number {q_id}.")
+                                invalid_tweet_ids = [doc_id for doc_id in q_res if invalid_tweet_id(doc_id)]
+                                if len(invalid_tweet_ids) > 0:
+                                    logging.error(f"Query  {q_id} returned results that are not valid tweet ids: " + str(
+                                        invalid_tweet_ids[:10]))
+                                queries_results.extend(
+                                    [(q_id, str(doc_id)) for doc_id in q_res if not invalid_tweet_id(doc_id)])
+                            if q_time > 10:
+                                logging.error(f"Query {q_id} with keywords '{q_keywords}' took more than 10 seconds.")
+                    queries_results = pd.DataFrame(queries_results, columns=['query', 'tweet'])
+                   # print("first 5 results for query number 1:")
+                   # print(queries_results.loc[queries_results['query'] == 1, 'tweet'].iloc[:5])
+                   # print("first 5 results for query number 2:")
+                   # print(queries_results.loc[queries_results['query'] == 2, 'tweet'].iloc[:5])
+                   # print("first 5 results for query number 4:")
+                   # print(queries_results.loc[queries_results['query'] == 4, 'tweet'].iloc[:5])
+                   # print("first 5 results for query number 7:")
+                   # print(queries_results.loc[queries_results['query'] == 7, 'tweet'].iloc[:5])
+                   # print("first 5 results for query number 8:")
+                   # print(queries_results.loc[queries_results['query'] == 8, 'tweet'].iloc[:5])
 
-                # merge query results with labels benchmark
-                q_results_labeled = None
-                if bench_lbls is not None and len(queries_results) > 0:
-                    q_results_labeled = pd.merge(queries_results, bench_lbls,
-                                                 on=['query', 'tweet'], how='inner', suffixes=('_result', '_bench'))
-                    # q_results_labeled.rename(columns={'y_true': 'label'})
-                    zero_recall_qs = [q_id for q_id, rel in q2n_relevant.items() \
-                                      if metrics.recall_single(q_results_labeled, rel, q_id) == 0]
-                    if len(zero_recall_qs) > 0:
-                        logging.warning(
-                            f"{engine_module}'s recall for the following queries was zero {zero_recall_qs}.")
+                    ## for testing each query:
+                    #queries_test = queries_results[queries_results['query'] == 8]
+                    #bench_lbls_test = bench_lbls[bench_lbls['query'] == 8]
+                    #q2n_relevant_test = {k: q2n_relevant[k] for k in [8]}
+                    ##
 
-                if q_results_labeled is not None:
-                    # test that MAP > 0
-                    results_map = metrics.map(q_results_labeled)
-                    logging.debug(f"{engine_module} results have MAP value of {results_map}.")
-                    if results_map <= 0 or results_map > 1:
-                        logging.error(f'{engine_module} results MAP value is out of range (0,1).')
+                    # merge query results with labels benchmark
+                    q_results_labeled = None
+                    if bench_lbls is not None and len(queries_results) > 0:
+                        q_results_labeled = pd.merge(queries_results, bench_lbls,
+                                                     on=['query', 'tweet'], how='inner', suffixes=('_result', '_bench'))
+                        # q_results_labeled.rename(columns={'y_true': 'label'})
+                        zero_recall_qs = [q_id for q_id, rel in q2n_relevant.items() \
+                                          if metrics.recall_single(q_results_labeled, rel, q_id) == 0]
+                        if len(zero_recall_qs) > 0:
+                            logging.warning(
+                                f"{engine_module}'s recall for the following queries was zero {zero_recall_qs}.")
 
-                    # test that the average across queries of precision,
-                    # precision@5, precision@10, precision@50, and recall
-                    # is in [0,1].
-                    prec, p5, p10, p50, recall = \
-                        metrics.precision(q_results_labeled), \
-                        metrics.precision(q_results_labeled.groupby('query').head(5)), \
-                        metrics.precision(q_results_labeled.groupby('query').head(10)), \
-                        metrics.precision(q_results_labeled.groupby('query').head(50)), \
-                        metrics.recall(q_results_labeled, q2n_relevant)
-                    logging.debug(f"{engine_module} results produced average precision of {prec}.")
-                    logging.debug(f"{engine_module} results produced average precision@5 of {p5}.")
-                    logging.debug(f"{engine_module} results produced average precision@10 of {p10}.")
-                    logging.debug(f"{engine_module} results produced average precision@50 of {p50}.")
-                    logging.debug(f"{engine_module} results produced average recall of {recall}.")
-                    if prec < 0 or prec > 1:
-                        logging.error(f"The average precision for {engine_module} is out of range [0,1].")
-                    if p5 < 0 or p5 > 1:
-                        logging.error(f"The average precision@5 for {engine_module} is out of range [0,1].")
-                    if p5 < 0 or p5 > 1:
-                        logging.error(f"The average precision@5 for {engine_module} is out of range [0,1].")
-                    if p50 < 0 or p50 > 1:
-                        logging.error(f"The average precision@50 for {engine_module} is out of range [0,1].")
-                    if recall < 0 or recall > 1:
-                        logging.error(f"The average recall for {engine_module} is out of range [0,1].")
+                    if q_results_labeled is not None:
+                        # test that MAP > 0
+                        results_map = metrics.map(q_results_labeled)
+                        #logging.debug(f"{engine_module} results have MAP value of {results_map}.")
+                        if results_map <= 0 or results_map > 1:
+                            logging.error(f'{engine_module} results MAP value is out of range (0,1).')
 
-                if engine_module == 'search_engine_best' and \
-                        test_file_exists('idx_bench.pkl'):
-                    logging.info('idx_bench.pkl found!')
-                    engine.load_index('idx_bench.pkl')
-                    logging.info('Successfully loaded idx_bench.pkl using search_engine_best.')
+                        # test that the average across queries of precision,
+                        # precision@5, precision@10, precision@50, and recall
+                        # is in [0,1].
+                        prec, p5, p10, p50, recall = \
+                            metrics.precision(q_results_labeled), \
+                            metrics.precision(q_results_labeled.groupby('query').head(5)), \
+                            metrics.precision(q_results_labeled.groupby('query').head(10)), \
+                            metrics.precision(q_results_labeled.groupby('query').head(50)), \
+                            metrics.recall(q_results_labeled, q2n_relevant)
+                        logging.debug(f"{engine_module} precision of {prec}.")
+                        logging.debug(f"{engine_module} precision@5 of {p5}.")
+                        logging.debug(f"{engine_module} precision@10 of {p10}.")
+                        logging.debug(f"{engine_module} precision@50 of {p50}.")
+                        logging.debug(f"{engine_module} recall of {recall}.")
+                        if prec < 0 or prec > 1:
+                            logging.error(f"The average precision for {engine_module} is out of range [0,1].")
+                        if p5 < 0 or p5 > 1:
+                            logging.error(f"The average precision@5 for {engine_module} is out of range [0,1].")
+                        if p5 < 0 or p5 > 1:
+                            logging.error(f"The average precision@5 for {engine_module} is out of range [0,1].")
+                        if p50 < 0 or p50 > 1:
+                            logging.error(f"The average precision@50 for {engine_module} is out of range [0,1].")
+                        if recall < 0 or recall > 1:
+                            logging.error(f"The average recall for {engine_module} is out of range [0,1].")
+
+                    if engine_module == 'search_engine_best' and \
+                            test_file_exists('idx_bench.pkl'):
+                        logging.info('idx_bench.pkl found!')
+                        engine.load_index('idx_bench.pkl')
+                        logging.info('Successfully loaded idx_bench.pkl using search_engine_best.')
 
             except Exception as e:
                 logging.error(f'The following error occured while testing the module {engine_module}.')

@@ -6,8 +6,9 @@ from configuration import ConfigClass
 class Word2Vec:
 
     def __init__(self):
+
         #self.model = gensim.models.KeyedVectors.load_word2vec_format('GoogleNews-vectors-negative300.bin', binary=True,encoding='utf-8')
-        self.model = gensim.models.KeyedVectors.load_word2vec_format(ConfigClass.google_news_vectors_negative300_path, binary=True,encoding='utf-8')
+        self.model = gensim.models.KeyedVectors.load_word2vec_format(ConfigClass().google_news_vectors_negative300_path, binary=True,encoding='utf-8')
         self.terms_dict = {}
 
     def get_similar_words(self, term):

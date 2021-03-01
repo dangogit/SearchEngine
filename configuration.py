@@ -1,4 +1,5 @@
 class ConfigClass:
+
     def __init__(self):
         # link to a zip file in google drive with your pretrained model
         self._model_url = None

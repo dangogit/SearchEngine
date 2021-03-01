@@ -9,10 +9,10 @@ from configuration import ConfigClass
 class Glove:
 
     def __init__(self):
-        #glove2word2vec('glove.twitter.27B.25d.txt', 'glove.twitter.27B.25d.txt.word2vec')
-        #self.model = KeyedVectors.load_word2vec_format('glove.twitter.27B.25d.txt.word2vec', binary=False)
-        glove2word2vec(ConfigClass.glove_twitter_27B_25d_path, 'glove.twitter.27B.25d.txt.word2vec')
+        glove2word2vec('glove.twitter.27B.25d.txt', 'glove.twitter.27B.25d.txt.word2vec')
         self.model = KeyedVectors.load_word2vec_format('glove.twitter.27B.25d.txt.word2vec', binary=False)
+        #glove2word2vec(ConfigClass().glove_twitter_27B_25d_path, 'glove.twitter.27B.25d.txt.word2vec')
+        #self.model = KeyedVectors.load_word2vec_format('glove.twitter.27B.25d.txt.word2vec', binary=False)
         self.terms_dict = {}
 
     def get_similar_words(self, term):
